@@ -1,0 +1,496 @@
+"apiVersion": |-
+  argoproj.io/v1alpha1
+"kind": |-
+  Workflow
+"metadata":
+  "annotations":
+    "pipelines.kubeflow.org/pipeline_spec": |-
+      {"description": "Simple TF CNN", "inputs": [{"name": "tenant_id"}, {"name": "service_principal_id"}, {"name": "service_principal_password"}, {"name": "subscription_id"}, {"name": "resource_group"}, {"name": "workspace"}], "name": "Tacos vs. Burritos"}
+  "generateName": |-
+    tacos-vs-burritos-
+"spec":
+  "arguments":
+    "parameters":
+    - "name": |-
+        tenant_id
+    - "name": |-
+        service_principal_id
+    - "name": |-
+        service_principal_password
+    - "name": |-
+        subscription_id
+    - "name": |-
+        resource_group
+    - "name": |-
+        workspace
+  "entrypoint": |-
+    tacos-vs-burritos
+  "serviceAccountName": |-
+    pipeline-runner
+  "templates":
+  - "container":
+      "args":
+      - |-
+        /scripts/deploy.sh
+      - |-
+        -n
+      - |-
+        tacosandburritos
+      - |-
+        -m
+      - |-
+        tacosandburritos
+      - |-
+        -i
+      - |-
+        /scripts/inferenceconfig.json
+      - |-
+        -d
+      - |-
+        /scripts/deploymentconfig.json
+      - |-
+        -t
+      - |-
+        {{inputs.parameters.tenant_id}}
+      - |-
+        -r
+      - |-
+        {{inputs.parameters.resource_group}}
+      - |-
+        -w
+      - |-
+        {{inputs.parameters.workspace}}
+      - |-
+        -s
+      - |-
+        {{inputs.parameters.service_principal_id}}
+      - |-
+        -p
+      - |-
+        {{inputs.parameters.service_principal_password}}
+      - |-
+        -u
+      - |-
+        {{inputs.parameters.subscription_id}}
+      - |-
+        -b
+      - |-
+        /mnt/azure
+      "command":
+      - |-
+        sh
+      "image": |-
+        kubeflowyoacr.azurecr.io/mexicanfood/deploy:latest
+      "imagePullPolicy": |-
+        Always
+      "volumeMounts":
+      - "mountPath": |-
+          /mnt/azure
+        "name": |-
+          azure
+    "inputs":
+      "parameters":
+      - "name": |-
+          resource_group
+      - "name": |-
+          service_principal_id
+      - "name": |-
+          service_principal_password
+      - "name": |-
+          subscription_id
+      - "name": |-
+          tenant_id
+      - "name": |-
+          workspace
+    "name": |-
+      deploy
+    "volumes":
+    - "name": |-
+        azure
+      "persistentVolumeClaim":
+        "claimName": |-
+          azure-managed-disk
+  - "container":
+      "args":
+      - |-
+        /scripts/data.py
+      - |-
+        --base_path
+      - |-
+        /mnt/azure
+      - |-
+        --data
+      - |-
+        train
+      - |-
+        --target
+      - |-
+        train.txt
+      - |-
+        --img_size
+      - |-
+        160
+      - |-
+        --zipfile
+      - |-
+        https://aiadvocate.blob.core.windows.net/public/tacodata.zip
+      "command":
+      - |-
+        python
+      "image": |-
+        kubeflowyoacr.azurecr.io/mexicanfood/preprocess:latest
+      "imagePullPolicy": |-
+        Always
+      "volumeMounts":
+      - "mountPath": |-
+          /mnt/azure
+        "name": |-
+          azure
+    "name": |-
+      preprocess
+    "volumes":
+    - "name": |-
+        azure
+      "persistentVolumeClaim":
+        "claimName": |-
+          azure-managed-disk
+  - "container":
+      "args":
+      - |-
+        /scripts/profile.sh
+      - |-
+        -n
+      - |-
+        tacoprofile
+      - |-
+        -m
+      - |-
+        tacosandburritos
+      - |-
+        -i
+      - |-
+        /scripts/inferenceconfig.json
+      - |-
+        -d
+      - |-
+        {"image":"https://www.exploreveg.org/files/2015/05/sofritas-burrito.jpeg"}
+      - |-
+        -t
+      - |-
+        {{inputs.parameters.tenant_id}}
+      - |-
+        -r
+      - |-
+        {{inputs.parameters.resource_group}}
+      - |-
+        -w
+      - |-
+        {{inputs.parameters.workspace}}
+      - |-
+        -s
+      - |-
+        {{inputs.parameters.service_principal_id}}
+      - |-
+        -p
+      - |-
+        {{inputs.parameters.service_principal_password}}
+      - |-
+        -u
+      - |-
+        {{inputs.parameters.subscription_id}}
+      - |-
+        -b
+      - |-
+        /mnt/azure
+      "command":
+      - |-
+        sh
+      "image": |-
+        kubeflowyoacr.azurecr.io/mexicanfood/profile:latest
+      "imagePullPolicy": |-
+        Always
+      "volumeMounts":
+      - "mountPath": |-
+          /mnt/azure
+        "name": |-
+          azure
+    "inputs":
+      "parameters":
+      - "name": |-
+          resource_group
+      - "name": |-
+          service_principal_id
+      - "name": |-
+          service_principal_password
+      - "name": |-
+          subscription_id
+      - "name": |-
+          tenant_id
+      - "name": |-
+          workspace
+    "name": |-
+      profile
+    "volumes":
+    - "name": |-
+        azure
+      "persistentVolumeClaim":
+        "claimName": |-
+          azure-managed-disk
+  - "container":
+      "args":
+      - |-
+        /scripts/register.py
+      - |-
+        --base_path
+      - |-
+        /mnt/azure
+      - |-
+        --model
+      - |-
+        latest.h5
+      - |-
+        --model_name
+      - |-
+        tacosandburritos
+      - |-
+        --tenant_id
+      - |-
+        {{inputs.parameters.tenant_id}}
+      - |-
+        --service_principal_id
+      - |-
+        {{inputs.parameters.service_principal_id}}
+      - |-
+        --service_principal_password
+      - |-
+        {{inputs.parameters.service_principal_password}}
+      - |-
+        --subscription_id
+      - |-
+        {{inputs.parameters.subscription_id}}
+      - |-
+        --resource_group
+      - |-
+        {{inputs.parameters.resource_group}}
+      - |-
+        --workspace
+      - |-
+        {{inputs.parameters.workspace}}
+      "command":
+      - |-
+        python
+      "image": |-
+        kubeflowyoacr.azurecr.io/mexicanfood/register:latest
+      "imagePullPolicy": |-
+        Always
+      "volumeMounts":
+      - "mountPath": |-
+          /mnt/azure
+        "name": |-
+          azure
+    "inputs":
+      "parameters":
+      - "name": |-
+          resource_group
+      - "name": |-
+          service_principal_id
+      - "name": |-
+          service_principal_password
+      - "name": |-
+          subscription_id
+      - "name": |-
+          tenant_id
+      - "name": |-
+          workspace
+    "name": |-
+      register
+    "volumes":
+    - "name": |-
+        azure
+      "persistentVolumeClaim":
+        "claimName": |-
+          azure-managed-disk
+  - "dag":
+      "tasks":
+      - "arguments":
+          "parameters":
+          - "name": |-
+              resource_group
+            "value": |-
+              {{inputs.parameters.resource_group}}
+          - "name": |-
+              service_principal_id
+            "value": |-
+              {{inputs.parameters.service_principal_id}}
+          - "name": |-
+              service_principal_password
+            "value": |-
+              {{inputs.parameters.service_principal_password}}
+          - "name": |-
+              subscription_id
+            "value": |-
+              {{inputs.parameters.subscription_id}}
+          - "name": |-
+              tenant_id
+            "value": |-
+              {{inputs.parameters.tenant_id}}
+          - "name": |-
+              workspace
+            "value": |-
+              {{inputs.parameters.workspace}}
+        "dependencies":
+        - |-
+          profile
+        "name": |-
+          deploy
+        "template": |-
+          deploy
+      - "name": |-
+          preprocess
+        "template": |-
+          preprocess
+      - "arguments":
+          "parameters":
+          - "name": |-
+              resource_group
+            "value": |-
+              {{inputs.parameters.resource_group}}
+          - "name": |-
+              service_principal_id
+            "value": |-
+              {{inputs.parameters.service_principal_id}}
+          - "name": |-
+              service_principal_password
+            "value": |-
+              {{inputs.parameters.service_principal_password}}
+          - "name": |-
+              subscription_id
+            "value": |-
+              {{inputs.parameters.subscription_id}}
+          - "name": |-
+              tenant_id
+            "value": |-
+              {{inputs.parameters.tenant_id}}
+          - "name": |-
+              workspace
+            "value": |-
+              {{inputs.parameters.workspace}}
+        "dependencies":
+        - |-
+          register
+        "name": |-
+          profile
+        "template": |-
+          profile
+      - "arguments":
+          "parameters":
+          - "name": |-
+              resource_group
+            "value": |-
+              {{inputs.parameters.resource_group}}
+          - "name": |-
+              service_principal_id
+            "value": |-
+              {{inputs.parameters.service_principal_id}}
+          - "name": |-
+              service_principal_password
+            "value": |-
+              {{inputs.parameters.service_principal_password}}
+          - "name": |-
+              subscription_id
+            "value": |-
+              {{inputs.parameters.subscription_id}}
+          - "name": |-
+              tenant_id
+            "value": |-
+              {{inputs.parameters.tenant_id}}
+          - "name": |-
+              workspace
+            "value": |-
+              {{inputs.parameters.workspace}}
+        "dependencies":
+        - |-
+          training
+        "name": |-
+          register
+        "template": |-
+          register
+      - "dependencies":
+        - |-
+          preprocess
+        "name": |-
+          training
+        "template": |-
+          training
+    "inputs":
+      "parameters":
+      - "name": |-
+          resource_group
+      - "name": |-
+          service_principal_id
+      - "name": |-
+          service_principal_password
+      - "name": |-
+          subscription_id
+      - "name": |-
+          tenant_id
+      - "name": |-
+          workspace
+    "name": |-
+      tacos-vs-burritos
+  - "container":
+      "args":
+      - |-
+        /scripts/train.py
+      - |-
+        --base_path
+      - |-
+        /mnt/azure
+      - |-
+        --data
+      - |-
+        train
+      - |-
+        --epochs
+      - |-
+        5
+      - |-
+        --batch
+      - |-
+        32
+      - |-
+        --image_size
+      - |-
+        160
+      - |-
+        --lr
+      - |-
+        0.0001
+      - |-
+        --outputs
+      - |-
+        model
+      - |-
+        --dataset
+      - |-
+        train.txt
+      "command":
+      - |-
+        python
+      "image": |-
+        kubeflowyoacr.azurecr.io/mexicanfood/training:latest
+      "imagePullPolicy": |-
+        Always
+      "volumeMounts":
+      - "mountPath": |-
+          /mnt/azure
+        "name": |-
+          azure
+    "name": |-
+      training
+    "volumes":
+    - "name": |-
+        azure
+      "persistentVolumeClaim":
+        "claimName": |-
+          azure-managed-disk
