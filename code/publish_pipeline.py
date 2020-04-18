@@ -1,6 +1,7 @@
 import kfp
 import os
 import argparse
+from utils.azure_auth import get_access_token
 
 
 def main():
@@ -36,13 +37,35 @@ def main():
         help="KFP pipeline name "
     )
 
+    parser.add_argument(
+        "--tenant",
+        type=str,
+        required=True,
+        help="Tenant"
+    )
+
+    parser.add_argument(
+        "--service_principal",
+        type=str,
+        required=True,
+        help="Service Principal"
+    )
+
+    parser.add_argument(
+        "--sp_secret",
+        type=str,
+        required=True,
+        help="Service Principal Secret"
+    )
+
     args = parser.parse_args()
 
-    host = args.kfp_host
     pipeline_file_path = args.pipeline_file_path
     pipeline_name = "{0}-{1}".format(args.pipeline_name, args.run_id)
 
-    client = kfp.Client(host=host)
+    token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
+    client = kfp.Client(host=args.kfp_host, existing_token=token)
+
     pipeline_file = os.path.join(pipeline_file_path)
     try:
         # We upload a new pipline every time with a run_id in the pipeline name

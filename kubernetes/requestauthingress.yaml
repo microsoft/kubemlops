@@ -1,0 +1,30 @@
+apiVersion: "security.istio.io/v1beta1"
+kind: "RequestAuthentication"
+metadata:
+  name: jwt-azure
+  namespace: istio-system
+spec:
+  selector:
+    matchLabels:
+      app: istio-ingressgateway
+  jwtRules:
+  - issuer: "https://sts.windows.net/<TENANT>/"
+    jwksUri: "https://login.microsoftonline.com/common/discovery/keys"
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+ name: auth-policy
+ namespace: istio-system
+spec:
+ selector:
+   matchLabels:
+      app: istio-ingressgateway
+ rules:
+ - when:
+    - key: destination.ip
+      values: ["127.0.0.1"]          
+ - from:
+   - source:
+       requestPrincipals: ["*"]
+

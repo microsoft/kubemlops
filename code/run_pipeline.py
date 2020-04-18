@@ -1,5 +1,6 @@
 import kfp
 import argparse
+from utils.azure_auth import get_access_token
 
 
 def main():
@@ -49,12 +50,35 @@ def main():
         help="Kubeflow experiment name "
     )
 
+    parser.add_argument(
+        "--tenant",
+        type=str,
+        required=True,
+        help="Tenant"
+    )
+
+    parser.add_argument(
+        "--service_principal",
+        type=str,
+        required=True,
+        help="Service Principal"
+    )
+
+    parser.add_argument(
+        "--sp_secret",
+        type=str,
+        required=True,
+        help="Service Principal Secret"
+    )
+
     args = parser.parse_args()
-    client = kfp.Client(host=args.kfp_host)
+    token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
+    client = kfp.Client(host=args.kfp_host, existing_token=token)
 
     pipeline_params = {}
     pipeline_params["resource_group"] = args.resource_group
     pipeline_params["workspace"] = args.workspace
+    token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
     exp = client.get_experiment(experiment_name=args.experiment_name)  # noqa: E501
     client.run_pipeline(exp.id,
                         job_name=args.run_name,
