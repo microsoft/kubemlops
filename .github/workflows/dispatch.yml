@@ -9,12 +9,14 @@ jobs:
     - name: Copy Repository Contents
       uses: actions/checkout@master
     
-    # - name: handle repo dispatch payload
-    #   id: rd
-    #   run: |
-    #     python3 action_files/repo_dispatch_handler.py
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: handle repo dispatch payload
+      id: rd
+      run: |
+        python3 action_utils/event_dispatcher.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # GITHUB_EVENT_PATH: ${{ GITHUB_EVENT_PATH }}
+        # GITHUB_REPOSITORY: ${{ GITHUB_REPOSITORY }}
       
     # - name: Get Runs Using SHA
     #   uses: machine-learning-apps/wandb-action@master
