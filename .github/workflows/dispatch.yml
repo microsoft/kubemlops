@@ -7,7 +7,9 @@ jobs:
 
     steps:
     - name: Copy Repository Contents
-      uses: actions/checkout@eedorenko/cd
+      uses: actions/checkout@master
+      with:
+        ref: eedorenko/cd
     
     - name: Handle Repo Dispatch Payload
       id: rd
