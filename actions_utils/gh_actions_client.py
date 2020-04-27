@@ -30,11 +30,11 @@ def get_gh_actions_client():
     return GhActionsClient(os.getenv("GITHUB_TOKEN"), os.getenv("GITHUB_REPOSITORY"))
 
 if __name__ == "__main__":
-    pat = "27b2fa280166f4dd90c1f587671f0fba1f217d2d"
+    
     repo = "kaizentm/kubemlops"
     client = GhActionsClient(repo, pat)
-    #client.send_dispatch_event(sha="", pr_num="", phase="training")
-    client.add_comment(pr_num="6", comment="Hello from Client")
+    client.send_dispatch_event(sha="", pr_num="6", phase="Model is registered")
+    # client.add_comment(pr_num="6", comment="Hello from Client")
 
 
 
