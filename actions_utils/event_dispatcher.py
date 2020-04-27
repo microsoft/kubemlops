@@ -13,6 +13,8 @@ class EventDispatcher:
     def __init__(self, event_payload_file):
         with open(event_payload_file, 'r') as f:
             raw_payload = json.load(f)
+            print("Payload")
+            print(raw_payload)
             self.event_payload = eval(raw_payload['action'])
             print("Payload")
             print(self.event_payload)
