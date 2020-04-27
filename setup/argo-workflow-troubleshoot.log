@@ -1,0 +1,14 @@
+time="2020-04-14T00:19:18Z" level=fatal msg="configmaps \"workflow-controller-configmap\" is forbidden: User \"system:serviceaccount:argodev:argo-server\" cannot get resource \"configmaps\" in API group 
+\"\" in the namespace \"argodev\""
+
+k create rolebinding argodev-admin --clusterrole=admin --serviceaccount=argodev:argo-server
+klo argo-server-54b579f8f7-h4v27  
+time="2020-04-14T00:25:55Z" level=info authMode=server baseHRef=/ managedNamespace= namespace=argodev
+time="2020-04-14T00:25:55Z" level=info msg="config map" name=workflow-controller-configmap
+time="2020-04-14T00:25:55Z" level=info msg="Starting Argo Server" version=vlatest+9c6351f.dirty
+time="2020-04-14T00:25:55Z" level=fatal msg="error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field Config.artifactRepository of type config.ArtifactRepository" 
+
+k create rolebinding argo-read --clusterrole=admin --serviceaccount=argodev:argo
+klo workflow-controller-7d87897c87-889nd
+time="2020-04-14T00:28:31Z" level=info msg="config map" name=workflow-controller-configmap
+time="2020-04-14T00:28:31Z" level=fatal msg="Failed to register watch for controller config map: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go struct field Config.artifactRepository of type config.ArtifactRepository"

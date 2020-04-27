@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"ConfigMap","metadata":{"annotations":{},"name":"workflow-controller-configmap","namespace":"argodev"}}
+  creationTimestamp: "2020-04-14T00:13:03Z"
+  name: workflow-controller-configmap
+data:
+  config: |
+    artifactRepository: |
+      s3:
+        bucket: my-bucket
+        endpoint: argo-artifacts:9000
+        insecure: true
+        accessKeySecret:
+          name: argo-artifacts
+          key: accesskey
+        secretKeySecret:
+          name: argo-artifacts
+          key: secretkey
