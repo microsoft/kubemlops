@@ -6,7 +6,6 @@ import requests
 import numpy as np
 from PIL import Image
 import tensorflow as tf
-
 from azureml.core.model import Model
 
 

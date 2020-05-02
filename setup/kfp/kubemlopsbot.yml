@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kubemlopsbot
+  labels:
+    app: kubemlopsbot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kubemlopsbot
+  template:
+    metadata:
+      labels:
+        app: kubemlopsbot
+    spec:
+      containers:
+      - name: bot
+        image: kubeflowyoacr.azurecr.io/kubemlopsbot:latest
+        env:
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: ghcreds-secret
+              key: GITHUB_TOKEN
+        - name: GITHUB_REPOSITORY
+          valueFrom:
+            secretKeyRef:
+              name: ghcreds-secret
+              key: GITHUB_REPOSITORY
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kubemlopsbot-svc
+spec:
+  selector:
+    app: kubemlopsbot   
+  ports:
+    - port: 8080
+      targetPort: 8080

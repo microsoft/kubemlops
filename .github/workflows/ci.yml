@@ -45,8 +45,7 @@ jobs:
     needs: code_quality_checks
     if: github.event_name == 'push' || github.event_name == 'issue_comment'
     steps:
-    # TODO: branch: ${{ github.ref }} will not work in case of github.event_name == 'issue_comment'. It will refer to master
-     
+    # TODO: branch: ${{ github.ref }} will not work in case of github.event_name == 'issue_comment'. It will refer to master     
 
     - name: Build Preprocess Image
       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
@@ -69,28 +68,6 @@ jobs:
         # The folder in the Github repo that holds the source
         folder: code/preprocess
     
-
-    - name: Build Deploy Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')    
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ github.ref }}
-        tag: latest
-        # Docker image name
-        image: deploy
-        # The folder in the Github repo that holds the source
-        folder: code/deploy
-
     - name: Build Register Image
       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')    
       uses: ams0/acr-task-github-action@v1
@@ -162,7 +139,8 @@ jobs:
     - name: Build KF Pipeline
       run: python pipeline.py
       working-directory: code
-
+      env:
+        PR_NUM: ${{ github.event.issue.number }} 
 
     - name: Publish/Upload KF Pipeline
       env:

@@ -1,0 +1,43 @@
+name: CD
+on:
+  repository_dispatch:
+    types: [Model is registered]
+    
+jobs:
+  deploy_to_qa:
+    runs-on: ubuntu-latest
+
+    steps:    
+    - name: Copy Repository Contents
+      uses: actions/checkout@master
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install requests --upgrade
+
+    - name: Handle Deploy Event
+      id: deh
+      run: |
+        python3 event_dispatcher.py --event_type "deploy"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: .github/events
+
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: '{"clientId":"${{ secrets.SERVICE_PRINCIPAL }}", "clientSecret":"${{ secrets.SERVICE_PRINCIPAL_PWD }}", "subscriptionId":"${{ secrets.SUBSCRIPTION_ID }}", "tenantId":"${{ secrets.TENANT }}"}' 
+    - name: Deploy
+      uses: azure/CLI@v1
+      with:
+        inlineScript: |          
+          cd $GITHUB_WORKSPACE/code/deploy
+          ./deploy.sh -m ${{ secrets.MODEL_NAME }} \
+                      -u ${{ secrets.SUBSCRIPTION_ID }} \
+                      -r ${{ secrets.RESOURCE_GROUP }} \
+                      -w ${{ secrets.AML_WORKSPACE }} \
+                      -x ${{ steps.deh.outputs.RUN_ID }} \
+                      -d ${{ secrets.DEPLOYMENT_NAME }}
+
+
+      
