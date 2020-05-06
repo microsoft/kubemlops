@@ -1,7 +1,7 @@
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
 import json
 from gh_actions_client import get_gh_actions_client
-
 
 # KubeMlOpsBot receives callback requests from the KFP pipeline and
 # sends an event to the orchestrator (GitHub in this implementation)
@@ -15,7 +15,7 @@ PORT = 8080
 
 
 class KubeMlOpsBotRequestHandler(BaseHTTPRequestHandler):
-
+    
     def do_POST(self):
         content_length = int(self.headers['Content-Length'])
         body = self.rfile.read(content_length)
@@ -26,6 +26,8 @@ class KubeMlOpsBotRequestHandler(BaseHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):        
+    pass
 
-httpd = HTTPServer(('', PORT), KubeMlOpsBotRequestHandler)
+httpd = ThreadedHTTPServer(('', PORT), KubeMlOpsBotRequestHandler)
 httpd.serve_forever()
