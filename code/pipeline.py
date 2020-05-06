@@ -80,7 +80,7 @@ def tacosandburritos_train(
         # train
         operations['training'] = dsl.ContainerOp(
             name='training',
-            image=image_repo_name + '/training:latest',
+            image=image_repo_name + '/training:metric',
             command=['python'],
             arguments=[
                 '/scripts/train.py',
@@ -92,7 +92,11 @@ def tacosandburritos_train(
                 '--lr', learning_rate,
                 '--outputs', model_folder,
                 '--dataset', training_dataset
-            ]
+            ],
+            output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
+                'mlpipeline-metrics': '/mlpipeline-metrics.json',
+                'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
+            }
         )
         operations['training'].after(operations['preprocess'])
 

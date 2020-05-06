@@ -10,6 +10,8 @@ from pathlib2 import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow.data import Dataset
+from tensorflow.python.lib.io import file_io
+import pandas as pd
 
 
 def info(msg, char="#", width=75):
@@ -123,6 +125,22 @@ def run(
 
     model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
 
+    # Log metric
+    # TODO calculate metric from based on evalution data.
+    # accuracy = model.evaluate()
+    accuracy = 0.086  # dummy score
+    metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
+        'metrics': [{
+            'name': 'accuracy-score',
+            'numberValue':  accuracy,
+            'format': "PERCENTAGE",
+        }]}
+
+    # Pipeline Metric
+    info('Writing Pipeline Metric')
+    with file_io.FileIO('/mlpipeline-metrics.json', 'w') as f:
+        json.dump(metrics, f)
+
     # save model
     info('Saving Model')
 
@@ -210,5 +228,20 @@ if __name__ == "__main__":
         json.dump(args, f)
 
     print(' Saved to {}'.format(str(params)))
+
+    info('Log Traning Parameters')
+    parmeters = pd.read_json(str(params), typ='series')
+    metadata = {
+        'outputs': [{
+            'type': 'table',
+            'storage': 'inline',
+            'format': 'csv',
+            'header': ['Name', 'Value'],
+            'source': parmeters.to_csv()
+        }]
+    }
+
+    with open('/mlpipeline-ui-metadata.json', 'w') as f:
+        json.dump(metadata, f)
 
     # python train.py -d train -e 3 -b 32 -l 0.0001 -o model -f train.txt
