@@ -80,7 +80,7 @@ def tacosandburritos_train(
         # train
         operations['training'] = dsl.ContainerOp(
             name='training',
-            image=image_repo_name + '/training:metric',
+            image=image_repo_name + '/training:latest',
             command=['python'],
             arguments=[
                 '/scripts/train.py',
@@ -99,6 +99,23 @@ def tacosandburritos_train(
             }
         )
         operations['training'].after(operations['preprocess'])
+
+        # register kubeflow artifcats model
+        operations['registerkfartifacts'] = dsl.ContainerOp(
+            name='registerartifacts',
+            image=image_repo_name + '/registerartifacts:latest',
+            command=['python'],
+            arguments=[
+                '/scripts/registerartifacts.py',
+                '--base_path', persistent_volume_path,
+                '--model', 'latest.h5',
+                '--model_name', model_name,
+                '--data', training_folder,
+                '--dataset', training_dataset,
+                '--run_id', dsl.RUN_ID_PLACEHOLDER
+            ]
+        ).apply(use_azure_secret())
+        operations['registerkfartifacts'].after(operations['training'])
 
         # register model
         operations['register'] = dsl.ContainerOp(
@@ -119,7 +136,7 @@ def tacosandburritos_train(
                 '--run_id', dsl.RUN_ID_PLACEHOLDER
             ]
         ).apply(use_azure_secret())
-        operations['register'].after(operations['training'])
+        operations['register'].after(operations['registerkfartifacts'])
 
         operations['finalize'] = dsl.ContainerOp(
             name='Finalize',

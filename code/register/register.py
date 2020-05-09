@@ -41,7 +41,7 @@ def run(mdl_path, model_name, ws, tgs):
     mdl_path = relpath(mdl_path, '.')
 
     Model.register(ws, model_name=model_name, model_path=mdl_path, tags=tgs)
-    print('Done!')
+    info("Model Registered")
 
 
 if __name__ == "__main__":
