@@ -5,6 +5,7 @@ import kfp.compiler as compiler
 from kfp.azure import use_azure_secret
 import json
 import os
+from kubernetes.client.models import V1EnvVar
 
 TRAIN_START_EVENT = "Training Started"
 TRAIN_FINISH_EVENT = "Training Finished"
@@ -44,6 +45,7 @@ def tacosandburritos_train(
     model_folder = 'model'
     image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
     callback_url = 'kubemlopsbot-svc.kubeflow.svc.cluster.local:8080'
+    mlflow_url = 'http://mlflow:5000'
 
     exit_op = dsl.ContainerOp(
         name='Exit Handler',
@@ -97,7 +99,7 @@ def tacosandburritos_train(
                 'mlpipeline-metrics': '/mlpipeline-metrics.json',
                 'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
             }
-        )
+        ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url))  # noqa: E501
         operations['training'].after(operations['preprocess'])
 
         # register kubeflow artifcats model
@@ -138,6 +140,21 @@ def tacosandburritos_train(
         ).apply(use_azure_secret())
         operations['register'].after(operations['registerkfartifacts'])
 
+        # register model to mlflow
+        operations['register_to_mlflow'] = dsl.ContainerOp(
+            name='register to mlflow',
+            image=image_repo_name + '/register-mlflow:latest',
+            command=['python'],
+            arguments=[
+                '/scripts/register.py',
+                '--model', 'model',
+                '--model_name', model_name,
+                '--experiment_name', 'mexicanfood',
+                '--run_id', dsl.RUN_ID_PLACEHOLDER
+            ]
+        ).apply(use_azure_secret()).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url))  # noqa: E501
+        operations['register_to_mlflow'].after(operations['register'])
+
         operations['finalize'] = dsl.ContainerOp(
             name='Finalize',
             image="curlimages/curl",
@@ -147,7 +164,7 @@ def tacosandburritos_train(
                 callback_url
             ]
         )
-        operations['finalize'].after(operations['register'])
+        operations['finalize'].after(operations['register_to_mlflow'])
 
     # operations['deploy'] = dsl.ContainerOp(
     #     name='deploy',

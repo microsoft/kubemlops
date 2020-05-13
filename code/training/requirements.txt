@@ -1,3 +1,4 @@
 Pillow
 pathlib2
 pandas
+mlflow

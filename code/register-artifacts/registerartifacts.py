@@ -85,8 +85,8 @@ if __name__ == "__main__":
         strict=False).joinpath(args.model).resolve(strict=False))
     data_path = Path(args.base_path).joinpath(args.data).resolve(strict=False)
     dataset = Path(args.base_path).joinpath(args.dataset)
-    lables = {
-        'run_is': args.run_id
+    labels = {
+        'run_id': args.run_id
     }
 
     ws = get_ws("Kubemlops", "MLops for Kubeflow")
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     info('Log model artifact')
     model_version = "model_version_" + str(uuid4())
     log_model(args.model_name, model_path, model_version,
-              execution, json.dumps(lables))
+              execution, json.dumps(labels))
 
     info('Log traning data set')
 
-    log_dataset(args.dataset, str(dataset), execution, json.dumps(lables))
+    log_dataset(args.dataset, str(dataset), execution, json.dumps(labels))

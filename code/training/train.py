@@ -5,13 +5,15 @@ import hmac
 import json
 import hashlib
 import argparse
-from random import shuffle
+from random import shuffle, random
 from pathlib2 import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow.data import Dataset
 from tensorflow.python.lib.io import file_io
 import pandas as pd
+import mlflow
+import mlflow.tensorflow
 
 
 def info(msg, char="#", width=75):
@@ -122,19 +124,27 @@ def run(
     # training
     info('Training')
     steps_per_epoch = math.ceil(len(train) / batch_size)
-
+    mlflow.tensorflow.autolog()
     model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
 
     # Log metric
     # TODO calculate metric from based on evalution data.
     # accuracy = model.evaluate()
-    accuracy = 0.086  # dummy score
-    metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
-        'metrics': [{
+    accuracy = random()  # dummy score
+    metric = {
             'name': 'accuracy-score',
             'numberValue':  accuracy,
             'format': "PERCENTAGE",
-        }]}
+        }
+    metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
+        'metrics': [metric]}
+
+    # TODO
+    # It would be nice to refactor all this infra code below like logging, saving files,  # noqa: E501
+    # out of this method so it just does the training and returns the model along with metrics  # noqa: E501
+
+    # Log to mlflow
+    mlflow.log_metrics({"accuracy": accuracy})
 
     # Pipeline Metric
     info('Writing Pipeline Metric')
@@ -155,6 +165,7 @@ def run(
     file_output = str(Path(output).joinpath('latest.h5'))
     print('Serializing h5 model to:\n{}'.format(file_output))
     model.save(file_output)
+    # mlflow.log_artifact(file_output)
 
     return generate_hash(file_output, 'kf_pipeline')
 
@@ -218,11 +229,16 @@ if __name__ == "__main__":
     for i in args:
         print('{} => {}'.format(i, args[i]))
 
+    # Log to mlflow
+    mlflow.set_experiment("mexicanfood")
+    mlflow.set_tag("external_run_id", os.getenv("RUN_ID"))
+
     model_signature = run(**args)
 
     args['dataset_signature'] = dataset_signature.upper()
     args['model_signature'] = model_signature.upper()
     args['model_type'] = 'tfv2-MobileNetV2'
+    #  mlflow.log_params(args)
     print('Writing out params...', end='')
     with open(str(params), 'w') as f:
         json.dump(args, f)
