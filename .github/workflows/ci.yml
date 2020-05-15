@@ -47,6 +47,26 @@ jobs:
     needs: code_quality_checks
     if: github.event_name == 'push' || github.event_name == 'issue_comment'
     steps:
+    - name: Build Databricks Notebook Image
+      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+      uses: ams0/acr-task-github-action@v1
+      with:
+        # Service Principal with Contributor role on the ACR
+        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+        # Service Principal password
+        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+        # Azure Container Registry tenant
+        tenant: ${{ secrets.TENANT }}
+        # The name of the ACR, minus the .azurecr.io
+        registry: ${{ env.ACR_REGISTRY }}
+        # Repository to use
+        repository: ${{ env.ACR_REPOSITORY }}
+        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+        tag: latest
+        # Docker image name
+        image: databricks-notebook
+        # The folder in the Github repo that holds the source
+        folder: code/databricks
     - name: Build Preprocess Image
       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
       uses: ams0/acr-task-github-action@v1

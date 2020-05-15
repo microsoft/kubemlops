@@ -26,6 +26,50 @@ def get_callback_payload(event_type):
     return json.dumps(payload)
 
 
+#  TODO: refactor this. Looks ugly
+def use_databricks_secret(secret_name='databricks-secret'):
+    def _use_databricks_secret(task):
+        from kubernetes import client as k8s_client
+        (
+            task.container
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='DATABRICKS_HOST',
+                        value_from=k8s_client.V1EnvVarSource(
+                            secret_key_ref=k8s_client.V1SecretKeySelector(
+                                name=secret_name,
+                                key='DATABRICKS_HOST'
+                            )
+                        )
+                    )
+                )
+                .add_env_variable(  # noqa: E131
+                    k8s_client.V1EnvVar(
+                        name='DATABRICKS_TOKEN',
+                        value_from=k8s_client.V1EnvVarSource(
+                            secret_key_ref=k8s_client.V1SecretKeySelector(
+                                name=secret_name,
+                                key='DATABRICKS_TOKEN'
+                            )
+                        )
+                    )
+                )
+                .add_env_variable(  # noqa: E131
+                    k8s_client.V1EnvVar(
+                        name='CLUSTER_ID',
+                        value_from=k8s_client.V1EnvVarSource(
+                            secret_key_ref=k8s_client.V1SecretKeySelector(
+                                name=secret_name,
+                                key='CLUSTER_ID'
+                            )
+                        )
+                    )
+                )
+        )
+        return task
+    return _use_databricks_secret
+
+
 def tacosandburritos_train(
     resource_group,
     workspace
@@ -64,6 +108,18 @@ def tacosandburritos_train(
                               command=['curl'],
                               args=['-d',
                                     get_callback_payload(TRAIN_START_EVENT), callback_url])  # noqa: E501
+        operations['run_on_databricks'] = dsl.ContainerOp(
+            name='run_on_databricks',
+            init_containers=[start_callback],
+            image=image_repo_name + '/databricks-notebook:latest',
+            command=['bash'],
+            arguments=[
+                '/scripts/run_notebook.sh',
+                '-r', dsl.RUN_ID_PLACEHOLDER,
+                '-p', '{"argument_one":"param one","argument_two":"param two"}'
+            ]
+        ).apply(use_databricks_secret())
+
         operations['preprocess'] = dsl.ContainerOp(
             name='preprocess',
             init_containers=[start_callback],
@@ -78,6 +134,7 @@ def tacosandburritos_train(
                 '--zipfile', data_download
             ]
         )
+        operations['preprocess'].after(operations['run_on_databricks'])
 
         # train
         operations['training'] = dsl.ContainerOp(
