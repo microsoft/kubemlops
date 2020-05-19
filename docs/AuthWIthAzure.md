@@ -2,7 +2,7 @@
 
 ## Configure K8s cluster
 * Upgrade [Istio to >=1.5](https://istio.io/docs/setup/getting-started/#download).
-* Apply [requestauthingress.yaml](../kubernetes/requestauthingress.yaml). Update the file with your tenant id. 
+* Apply [requestauthingress.yaml](../setup/kfp/requestauthingress.yaml). Update the file with your tenant id. 
   
 ## API calls
 API is available on Istio Ingress endpoint with the request header "Authorization: Bearer TOKEN"

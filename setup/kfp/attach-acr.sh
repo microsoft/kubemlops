@@ -1,0 +1,1 @@
+az aks update -n myAKSCluster -g myResourceGroup --attach-acr <acrName>
