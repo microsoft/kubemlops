@@ -71,19 +71,29 @@ def main():
         help="Service Principal Secret"
     )
 
+    parser.add_argument(
+        "--datasets",
+        type=str,
+        required=True,
+        help="Datasets"
+    )
+
     args = parser.parse_args()
     token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
     client = kfp.Client(host=args.kfp_host, existing_token=token)
+    token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
+    exp = client.get_experiment(experiment_name=args.experiment_name)  # noqa: E501
 
     pipeline_params = {}
     pipeline_params["resource_group"] = args.resource_group
     pipeline_params["workspace"] = args.workspace
-    token = get_access_token(args.tenant, args.service_principal, args.sp_secret)  # noqa: E501
-    exp = client.get_experiment(experiment_name=args.experiment_name)  # noqa: E501
-    client.run_pipeline(exp.id,
-                        job_name=args.run_name,
-                        params=pipeline_params,
-                        pipeline_id=args.pipeline_id)
+    datasets = args.datasets.split(',')
+    for dataset in datasets:
+        pipeline_params["dataset"] = dataset
+        client.run_pipeline(exp.id,
+                            job_name=args.run_name,
+                            params=pipeline_params,
+                            pipeline_id=args.pipeline_id)
 
 
 if __name__ == '__main__':

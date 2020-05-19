@@ -72,15 +72,14 @@ def use_databricks_secret(secret_name='databricks-secret'):
 
 def tacosandburritos_train(
     resource_group,
-    workspace
+    workspace,
+    dataset
 ):
     """Pipeline steps"""
 
     persistent_volume_path = '/mnt/azure'
-    data_download = 'https://aiadvocate.blob.core.windows.net/public/tacodata.zip'  # noqa: E501
-    epochs = 2
+    data_download = dataset  # noqa: E501
     batch = 32
-    learning_rate = 0.0001
     model_name = 'tacosandburritos'
     operations = {}
     image_size = 160
@@ -108,13 +107,12 @@ def tacosandburritos_train(
                               command=['curl'],
                               args=['-d',
                                     get_callback_payload(TRAIN_START_EVENT), callback_url])  # noqa: E501
-        operations['run_on_databricks'] = dsl.ContainerOp(
-            name='run_on_databricks',
+
+        operations['data processing on databricks'] = dsl.ContainerOp(
+            name='data processing on databricks',
             init_containers=[start_callback],
             image=image_repo_name + '/databricks-notebook:latest',
-            command=['bash'],
             arguments=[
-                '/scripts/run_notebook.sh',
                 '-r', dsl.RUN_ID_PLACEHOLDER,
                 '-p', '{"argument_one":"param one","argument_two":"param two"}'
             ]
@@ -122,7 +120,6 @@ def tacosandburritos_train(
 
         operations['preprocess'] = dsl.ContainerOp(
             name='preprocess',
-            init_containers=[start_callback],
             image=image_repo_name + '/preprocess:latest',
             command=['python'],
             arguments=[
@@ -134,34 +131,50 @@ def tacosandburritos_train(
                 '--zipfile', data_download
             ]
         )
-        operations['preprocess'].after(operations['run_on_databricks'])
 
-        # train
-        operations['training'] = dsl.ContainerOp(
-            name='training',
-            image=image_repo_name + '/training:latest',
-            command=['python'],
-            arguments=[
-                '/scripts/train.py',
-                '--base_path', persistent_volume_path,
-                '--data', training_folder,
-                '--epochs', epochs,
-                '--batch', batch,
-                '--image_size', image_size,
-                '--lr', learning_rate,
-                '--outputs', model_folder,
-                '--dataset', training_dataset
-            ],
-            output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
-                'mlpipeline-metrics': '/mlpipeline-metrics.json',
-                'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
-            }
-        ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url))  # noqa: E501
+        operations['preprocess'].after(operations['data processing on databricks'])  # noqa: E501
+
+        #  train
+        #  TODO: read set of parameters from config file
+        with dsl.ParallelFor([{'epochs': 1, 'lr': 0.0001}, {'epochs': 2, 'lr': 0.0002}, {'epochs': 3, 'lr': 0.0003}]) as item:  # noqa: E501
+            operations['training'] = dsl.ContainerOp(
+                name="training",
+                image=image_repo_name + '/training:latest',
+                command=['python'],
+                arguments=[
+                    '/scripts/train.py',
+                    '--base_path', persistent_volume_path,
+                    '--data', training_folder,
+                    '--epochs', item.epochs,
+                    '--batch', batch,
+                    '--image_size', image_size,
+                    '--lr', item.lr,
+                    '--outputs', model_folder,
+                    '--dataset', training_dataset
+                ],
+                output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
+                    'mlpipeline-metrics': '/mlpipeline-metrics.json',
+                    'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
+                }
+                ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)).add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet'))  # noqa: E501
+
         operations['training'].after(operations['preprocess'])
 
+        operations['evaluate'] = dsl.ContainerOp(
+            name='evaluate',
+            image="busybox",
+            command=['sh', '-c'],
+            arguments=[
+                'echo',
+                'Life is Good!'
+            ]
+
+        )
+        operations['evaluate'].after(operations['training'])
+
         # register kubeflow artifcats model
-        operations['registerkfartifacts'] = dsl.ContainerOp(
-            name='registerartifacts',
+        operations['register to kubeflow'] = dsl.ContainerOp(
+            name='register to kubeflow',
             image=image_repo_name + '/registerartifacts:latest',
             command=['python'],
             arguments=[
@@ -174,11 +187,11 @@ def tacosandburritos_train(
                 '--run_id', dsl.RUN_ID_PLACEHOLDER
             ]
         ).apply(use_azure_secret())
-        operations['registerkfartifacts'].after(operations['training'])
+        operations['register to kubeflow'].after(operations['evaluate'])
 
         # register model
-        operations['register'] = dsl.ContainerOp(
-            name='register',
+        operations['register to AML'] = dsl.ContainerOp(
+            name='register to AML',
             image=image_repo_name + '/register:latest',
             command=['python'],
             arguments=[
@@ -195,10 +208,10 @@ def tacosandburritos_train(
                 '--run_id', dsl.RUN_ID_PLACEHOLDER
             ]
         ).apply(use_azure_secret())
-        operations['register'].after(operations['registerkfartifacts'])
+        operations['register to AML'].after(operations['register to kubeflow'])
 
         # register model to mlflow
-        operations['register_to_mlflow'] = dsl.ContainerOp(
+        operations['register to mlflow'] = dsl.ContainerOp(
             name='register to mlflow',
             image=image_repo_name + '/register-mlflow:latest',
             command=['python'],
@@ -210,7 +223,7 @@ def tacosandburritos_train(
                 '--run_id', dsl.RUN_ID_PLACEHOLDER
             ]
         ).apply(use_azure_secret()).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url))  # noqa: E501
-        operations['register_to_mlflow'].after(operations['register'])
+        operations['register to mlflow'].after(operations['register to AML'])
 
         operations['finalize'] = dsl.ContainerOp(
             name='Finalize',
@@ -221,7 +234,7 @@ def tacosandburritos_train(
                 callback_url
             ]
         )
-        operations['finalize'].after(operations['register_to_mlflow'])
+        operations['finalize'].after(operations['register to mlflow'])
 
     # operations['deploy'] = dsl.ContainerOp(
     #     name='deploy',
@@ -249,7 +262,7 @@ def tacosandburritos_train(
             k8s_client.V1Volume(
               name='azure',
               persistent_volume_claim=k8s_client.V1PersistentVolumeClaimVolumeSource(  # noqa: E501
-                claim_name='azure-managed-disk')
+                claim_name='azure-managed-file')
             )
         ).add_volume_mount(k8s_client.V1VolumeMount(
             mount_path='/mnt/azure', name='azure'))

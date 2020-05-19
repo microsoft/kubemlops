@@ -173,6 +173,11 @@ jobs:
         folder: code/training
 
   build_kfp_pipeline:
+    env:
+      # DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip,https://aiadvocate.blob.core.windows.net/public/tacodata.zip"      
+      DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip"      
+    
+    
     runs-on: ubuntu-latest
     needs: [code_quality_checks, build_images]
     if: github.event_name == 'push' || github.event_name == 'issue_comment' && contains(github.event.comment.body, '/build-pipeline')
@@ -211,7 +216,7 @@ jobs:
                             --kfp_host $KFP_HOST \
                             --tenant ${{ secrets.tenant }} \
                             --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
-                            --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} 2>&1 >/dev/null)
+                            --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} 2>&1 >/dev/null)                            
         echo "::set-env name=PUBLISHED_PIPELINE_ID::$PIPELINE_ID"
       working-directory: code
 
@@ -231,5 +236,6 @@ jobs:
                                 --run_name "${{ secrets.KFP_PIPELINE_NAME }}" \
                                 --tenant ${{ secrets.tenant }} \
                                 --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
-                                --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+                                --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} \
+                                --datasets $DATASETS
       working-directory: code

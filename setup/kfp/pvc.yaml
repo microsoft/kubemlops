@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: azure-managed-disk
+  name: azure-managed-file
   namespace: kubeflow
 spec:
   accessModes:
-  - ReadWriteOnce
-  storageClassName: managed-premium
+  - ReadWriteMany
+  storageClassName: azurefile
   resources:
     requests:
       storage: 300Gi
