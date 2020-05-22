@@ -25,217 +25,216 @@ jobs:
     outputs:
       event_sha: ${{ env.event_sha }}
     steps:
-    - uses: actions/checkout@v2
-    - name: GetPRSHA
-      if: github.event_name == 'issue_comment' 
-      run: echo "::set-env name=event_sha::+refs/pull/${{ github.event.issue.number }}/merge"
-    - name: GetREFSHA
-      if: github.event_name != 'issue_comment' 
-      run: echo "::set-env name=event_sha::${{ github.ref }}"
-    - if: github.event_name == 'issue_comment' 
-      name: Checkout PR code
-      run: |
-       git fetch origin ${{ env.event_sha }}
-       git checkout FETCH_HEAD
-    - uses: TrueBrain/actions-flake8@master
-      if: 'true'
-      with:
-        path: code    
+      - uses: actions/checkout@v2
+      - name: GetPRSHA
+        if: github.event_name == 'issue_comment'
+        run: echo "::set-env name=event_sha::+refs/pull/${{ github.event.issue.number }}/merge"
+      - name: GetREFSHA
+        if: github.event_name != 'issue_comment'
+        run: echo "::set-env name=event_sha::${{ github.ref }}"
+      - if: github.event_name == 'issue_comment'
+        name: Checkout PR code
+        run: |
+          git fetch origin ${{ env.event_sha }}
+          git checkout FETCH_HEAD
+      - uses: TrueBrain/actions-flake8@master
+        if: "true"
+        with:
+          path: code
 
   build_images:
     runs-on: ubuntu-latest
     needs: code_quality_checks
     if: github.event_name == 'push' || github.event_name == 'issue_comment'
     steps:
-    - name: Build Databricks Notebook Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: databricks-notebook
-        # The folder in the Github repo that holds the source
-        folder: code/databricks
-    - name: Build Preprocess Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: preprocess
-        # The folder in the Github repo that holds the source
-        folder: code/preprocess
-      
-    - name: Build Register KF Artifacts Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: registerartifacts
-        # The folder in the Github repo that holds the source
-        folder: code/register-artifacts
-        
-    - name: Build AML Register Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')    
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: register
-        # The folder in the Github repo that holds the source
-        folder: code/register
+      - name: Build Databricks Notebook Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: databricks-notebook
+          # The folder in the Github repo that holds the source
+          folder: code/databricks
+      - name: Build Preprocess Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: preprocess
+          # The folder in the Github repo that holds the source
+          folder: code/preprocess
 
-    - name: Build MLFlow Register Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')    
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: register-mlflow
-        # The folder in the Github repo that holds the source
-        folder: code/register-mlflow
+      - name: Build Register KF Artifacts Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: registerartifacts
+          # The folder in the Github repo that holds the source
+          folder: code/register-artifacts
 
-    - name: Build Training Image
-      if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')    
-      uses: ams0/acr-task-github-action@v1
-      with:
-        # Service Principal with Contributor role on the ACR
-        service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-        # Service Principal password
-        service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-        # Azure Container Registry tenant
-        tenant: ${{ secrets.TENANT }}
-        # The name of the ACR, minus the .azurecr.io
-        registry: ${{ env.ACR_REGISTRY }}
-        # Repository to use
-        repository: ${{ env.ACR_REPOSITORY }}
-        branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-        tag: latest
-        # Docker image name
-        image: training
-        # The folder in the Github repo that holds the source
-        folder: code/training
+      - name: Build AML Register Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: register
+          # The folder in the Github repo that holds the source
+          folder: code/register
+
+      - name: Build MLFlow Register Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: register-mlflow
+          # The folder in the Github repo that holds the source
+          folder: code/register-mlflow
+
+      - name: Build Training Image
+        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+        uses: ams0/acr-task-github-action@v1
+        with:
+          # Service Principal with Contributor role on the ACR
+          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+          # Service Principal password
+          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+          # Azure Container Registry tenant
+          tenant: ${{ secrets.TENANT }}
+          # The name of the ACR, minus the .azurecr.io
+          registry: ${{ env.ACR_REGISTRY }}
+          # Repository to use
+          repository: ${{ env.ACR_REPOSITORY }}
+          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+          tag: latest
+          # Docker image name
+          image: training
+          # The folder in the Github repo that holds the source
+          folder: code/training
 
   build_kfp_pipeline:
     env:
-      # DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip,https://aiadvocate.blob.core.windows.net/public/tacodata.zip"      
-      DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip"      
-    
-    
+      # DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip,https://aiadvocate.blob.core.windows.net/public/tacodata.zip"
+      DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip"
+
     runs-on: ubuntu-latest
     needs: [code_quality_checks, build_images]
     if: github.event_name == 'push' || github.event_name == 'issue_comment' && contains(github.event.comment.body, '/build-pipeline')
     steps:
-    - uses: actions/checkout@v2
-    - if: github.event_name == 'issue_comment' 
-      name: Checkout PR code
-      run: |
-       git fetch origin ${{ needs.code_quality_checks.outputs.event_sha }}
-       git checkout FETCH_HEAD
-    # TODO
-    # All this stuff building/publishing/running pipeline should go to a custom action
-    # so the workflow is cleaner   
-    - name: Set up Python 3.7
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.7
-    
-    - name: Install Python dependencies
-      run: |
-        pip3 install kfp adal --upgrade
-    - name: Build KF Pipeline
-      run: python pipeline.py
-      working-directory: code
-      env:
-        PR_NUM: ${{ github.event.issue.number }} 
+      - uses: actions/checkout@v2
+      - if: github.event_name == 'issue_comment'
+        name: Checkout PR code
+        run: |
+          git fetch origin ${{ needs.code_quality_checks.outputs.event_sha }}
+          git checkout FETCH_HEAD
+      # TODO
+      # All this stuff building/publishing/running pipeline should go to a custom action
+      # so the workflow is cleaner
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
 
-    - name: Publish/Upload KF Pipeline
-      env:
-        KFP_PIPELINE_NAME: ${{ secrets.KFP_PIPELINE_NAME }}
-        KFP_HOST: ${{ secrets.KFP_HOST }}
-        RUN_ID: ${{ github.run_id }}
-      run: |
-        export PIPELINE_ID=$(python publish_pipeline.py --run_id $RUN_ID \
-                            --pipeline_name "$KFP_PIPELINE_NAME" \
-                            --kfp_host $KFP_HOST \
-                            --tenant ${{ secrets.tenant }} \
-                            --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
-                            --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} 2>&1 >/dev/null)                            
-        echo "::set-env name=PUBLISHED_PIPELINE_ID::$PIPELINE_ID"
-      working-directory: code
+      - name: Install Python dependencies
+        run: |
+          pip3 install kfp adal --upgrade
+      - name: Build KF Pipeline
+        run: python pipeline.py
+        working-directory: code
+        env:
+          PR_NUM: ${{ github.event.issue.number }}
 
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        # Artifact name
-        name: kfp-pipeline
-        path: "code/pipeline.py.tar.gz"
+      - name: Publish/Upload KF Pipeline
+        env:
+          KFP_PIPELINE_NAME: ${{ secrets.KFP_PIPELINE_NAME }}
+          KFP_HOST: ${{ secrets.KFP_HOST }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          export PIPELINE_ID=$(python publish_pipeline.py --run_id $RUN_ID \
+                              --pipeline_name "$KFP_PIPELINE_NAME" \
+                              --kfp_host $KFP_HOST \
+                              --tenant ${{ secrets.tenant }} \
+                              --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
+                              --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} 2>&1 >/dev/null)                            
+          echo "::set-env name=PUBLISHED_PIPELINE_ID::$PIPELINE_ID"
+        working-directory: code
 
-    - name: Run Pipeline ID
-      run: |
-        python run_pipeline.py --kfp_host ${{ secrets.KFP_HOST }} \
-                                --resource_group ${{ secrets.RESOURCE_GROUP }} \
-                                --workspace ${{ secrets.AML_WORKSPACE }} \
-                                --pipeline_id $PUBLISHED_PIPELINE_ID \
-                                --run_name "${{ secrets.KFP_PIPELINE_NAME }}" \
-                                --tenant ${{ secrets.tenant }} \
-                                --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
-                                --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} \
-                                --datasets $DATASETS
-      working-directory: code
+      - name: Upload artifact
+        uses: actions/upload-artifact@v1.0.0
+        with:
+          # Artifact name
+          name: kfp-pipeline
+          path: "code/pipeline.py.tar.gz"
+
+      - name: Run Pipeline ID
+        run: |
+          python run_pipeline.py --kfp_host ${{ secrets.KFP_HOST }} \
+                                  --resource_group ${{ secrets.RESOURCE_GROUP }} \
+                                  --workspace ${{ secrets.AML_WORKSPACE }} \
+                                  --pipeline_id $PUBLISHED_PIPELINE_ID \
+                                  --run_name "${{ secrets.KFP_PIPELINE_NAME }}" \
+                                  --tenant ${{ secrets.tenant }} \
+                                  --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
+                                  --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} \
+                                  --datasets $DATASETS
+        working-directory: code
