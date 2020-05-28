@@ -1,4 +1,5 @@
 resource_group_name      = "<resource-group-name>" // Must be an existing Resource Group within the subscription
+acr_name                 = "<container-regsitry-name>"
 cluster_name             = "<cluster-name>"
 agent_vm_count           = "3"
 dns_prefix               = "<dns-prefix>"

@@ -1,5 +1,5 @@
 module "provider" {
-  source = "../../azure/provider"
+  source = "github.com/microsoft/bedrock/cluster/azure/provider"
 }
 
 data "azurerm_resource_group" "resource_group" {
@@ -13,9 +13,10 @@ resource "azurerm_container_registry" "acr" {
   sku                      = var.acr_sku
   admin_enabled            = var.acr_admin_enabled
   georeplication_locations = var.acr_georeplication_locations
+}
 
 module "vnet" {
-  source = "../../azure/vnet"
+  source = "github.com/microsoft/bedrock/cluster/azure/vnet"
 
   resource_group_name     = data.azurerm_resource_group.resource_group.name
   vnet_name               = var.vnet_name
@@ -27,7 +28,7 @@ module "vnet" {
 }
 
 module "subnet" {
-  source = "../../azure/subnet"
+  source = "github.com/microsoft/bedrock/cluster/azure/subnet"
 
   subnet_name          = ["${var.cluster_name}-aks-subnet"]
   vnet_name            = module.vnet.vnet_name
@@ -36,7 +37,7 @@ module "subnet" {
 }
 
 module "aks-gitops" {
-  source = "../../azure/aks-gitops"
+  source = "github.com/microsoft/bedrock/cluster/azure/aks-gitops"
 
   acr_enabled              = var.acr_enabled
   agent_vm_count           = var.agent_vm_count
