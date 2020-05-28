@@ -2,7 +2,7 @@
 
 This is a Work in Progress template for deploying:
 
-1. A single Azure Container Registry
+1. A single Azure Container Registry with geo replication
 2. A single Azure Kubernetes Service Cluster and supporting infrastructure
 3. Currently Flux is also deployed to the above AKS cluster
 4. WIP - [ArgoCd](https://github.com/argoproj/argo-cd) deployment on cluster
