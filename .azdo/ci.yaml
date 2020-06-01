@@ -1,0 +1,195 @@
+resources:
+  containers:
+    - container: mlops
+      image: mcr.microsoft.com/mlops/python:latest
+
+pr: none
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - code/
+
+variables:
+  - group: kubeflow-azdo-sample
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  # - stage: "Code_Quality_Check"
+  #   displayName: "Code Quality Check"
+  #   jobs:
+  #     - job: "Code_Quality_Check"
+  #       displayName: "Code Quality Check"
+  #       container: mlops
+  #       timeoutInMinutes: 0
+  #       steps:
+  #         - template: code-quality-template.yml
+
+  # - stage: "Build_and_Push_KF_Component_Images"
+  #   displayName: "Build and Push KF Component Images"
+  #   variables:
+  #     BUILD_ALL_IMAGES: false
+  #   jobs:
+  #     - job:
+  #       condition: and(succeeded(), eq(variables['BUILD_ALL_IMAGES '], 'true'))
+  #       steps:
+  #       - task: Docker@2
+  #         displayName: Build and Push Preprocess Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/preprocess'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/preprocess/Dockerfile'
+  #           buildContext: 'code/preprocess/'
+  #           tags: 'latest'
+  #       - task: Docker@2
+  #         displayName: Build and Push Register Artifacts Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/registerartifacts'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/register-artifacts/Dockerfile'
+  #           buildContext: 'code/register-artifacts/'
+  #           tags: 'latest'
+  #       - task: Docker@2
+  #         displayName: Build and Push Register MLFlow Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/register-mlflow'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/register-mlflow/Dockerfile'
+  #           buildContext: 'code/register-mlflow/'
+  #           tags: 'latest'
+  #       - task: Docker@2
+  #         displayName: Build and Push Register Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/register'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/register/Dockerfile'
+  #           buildContext: 'code/register/'
+  #           tags: 'latest'
+  #       - task: Docker@2
+  #         displayName: Build and Push Training Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/training'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/training/Dockerfile'
+  #           buildContext: 'code/training/'
+  #           tags: 'latest'
+  #       - task: Docker@2
+  #         displayName: Build and Push Databricks Image
+  #         inputs:
+  #           containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+  #           repository: 'mexicanfood/databricks-notebook'
+  #           command: 'buildAndPush'
+  #           Dockerfile: 'code/databricks/Dockerfile'
+  #           buildContext: 'code/databricks/'
+  #           tags: 'latest'
+
+  - stage: "Build_Upload_Run_Kubeflow_Pipeline"
+    displayName: 'Build, Upload, and Run Kubeflow Pipeline'
+    variables:
+    - group: kubeflow-azdo-sample
+    jobs:
+      - job: "Upload_Pipeline"
+        steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.7'
+            addToPath: true
+            architecture: 'x64'
+        - task: CmdLine@2
+          displayName: "Install Kubeflow SDK" 
+          inputs:
+            script: |
+              pip install kfp --upgrade
+        - task: Bash@3
+          displayName: "Compile Pipeline"
+          inputs:
+            targetType: 'inline'
+            script: 'python code/pipelineazdo.py'
+       
+        - task: KubeflowUploadPipeline@0
+          displayName: "Upload Pipeline to KubeFlow" 
+          inputs:
+            kubeflowEndpoint: '$(KF_ENDPOINT)'
+            bearerToken: '$(KF_API_TOKEN)'
+            kubeflowPipelineTask: '$(KF_UPLOAD_CHOICE)'
+            pipelineFilePath: '$(KF_PIPELINE_FILE)'
+            newPipelineName: '$(KF_NEW_PIPELINE_NAME)'
+            existingPipelineName: '$(KF_EXISTING_PIPELINE_NAME)'
+            versionName: '$(KF_NEW_VERSION_NAME)'
+        - task: KubeflowExperimentRun@0
+          displayName: "Create Experiment with New Pipeline"
+          inputs:
+            kubeflowEndpoint: '$(KF_ENDPOINT)'
+            bearerToken: '$(KF_API_TOKEN)'
+            pipeline: '$(KF_NEW_PIPELINE_NAME)'
+            useDefaultVersion: '$(KF_USE_DEFAULT_VERSION)'
+            pipelineVersion: '$(KF_NEW_PIPELINE_NAME)'
+            experiment: '$(KF_EXPERIMENT_CHOICE)'
+            experimentName: '$(KF_EXPERIMENT_NAME)'
+            runName: '$(KF_RUN_NAME)'
+            pipelineParams: '$(KF_PIPELINE_PARAMS)'
+            runDescription: '$(KF_RUN_DESCRIPTION)'
+            waitForRunToFinish: '$(KF_WAIT_TO_COMPLETE)'
+            createNewRun: $(KF_CREATE_NEW_RUN)
+          condition: 
+            and(succeeded(), eq(variables['kf_upload_choice'], 'uploadNew'))
+
+        - task: KubeflowExperimentRun@0
+          displayName: "Create Experiment with New Pipeline Version"
+          inputs:
+            kubeflowEndpoint: '$(KF_ENDPOINT)'
+            bearerToken: '$(KF_API_TOKEN)'
+            pipeline: '$(KF_EXISTING_PIPELINE_NAME)'
+            useDefaultVersion: $(KF_USE_DEFAULT_VERSION)
+            pipelineVersion: '$(KF_NEW_VERSION_NAME)'
+            experiment: '$(KF_EXPERIMENT_CHOICE)'
+            experimentName: '$(KF_EXPERIMENT_NAME)'
+            runName: '$(KF_RUN_NAME)'
+            pipelineParams: '$(KF_PIPELINE_PARAMS)'
+            runDescription: '$(KF_RUN_DESCRIPTION)'
+            waitForRunToFinish: '$(KF_WAIT_TO_COMPLETE)'
+            createNewRun: $(KF_CREATE_NEW_RUN)
+          condition: 
+            and(succeeded(), eq(variables['kf_upload_choice'], 'uploadNewVersion'))
+
+        - task: Bash@3
+          name: "setpipelinevars"
+          displayName: "Set Variables for Invoking Pipeline"
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Write your commands here
+              KFPIPELINEVERSIONID=$(kf_pipeline_version_id)
+              echo "##vso[task.setvariable variable=KFPIPELINEVERSIONID;isOutput=true]$KFPIPELINEVERSIONID"
+              KPEXPID=$(kf_experiment_id)
+              echo "##vso[task.setvariable variable=KPEXPID;isOutput=true]$KPEXPID"
+              # echo $(kf_pipeline_version_id)
+              # echo $(kf_experiment_id)
+
+      - job: "Invoke_Pipeline"
+        dependsOn: "Upload_Pipeline"
+        pool: server
+        variables:
+          PIPELINE_VERSION_ID: $[ dependencies.Upload_Pipeline.outputs['setpipelinevars.KFPIPELINEVERSIONID'] ]
+          EXPERIMENT_ID: $[ dependencies.Upload_Pipeline.outputs['setpipelinevars.KPEXPID'] ]
+        steps:
+        - task: private-kfexperimentrun-async@0
+          displayName: "Invoke Pipeline"
+          inputs:
+            kubeflowEndpoint: '$(KF_ENDPOINT_ASYNC)'
+            bearerToken: '$(KF_API_TOKEN)'
+            pipelineVersionID: '$(PIPELINE_VERSION_ID)'
+            experimentID: '$(EXPERIMENT_ID)'
+            runName: '$(KF_RUN_NAME)'
+            pipelineParams: '$(KF_PIPELINE_PARAMS2)'
+            runDescription: '$(KF_RUN_DESCRIPTION)'
+

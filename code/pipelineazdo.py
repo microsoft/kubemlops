@@ -61,8 +61,7 @@ def azdocallback(callbackinfo):
         subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests'])
         import requests                                                                   # noqa: F811,E501
         import json                                                                       # noqa: F811,E501
-        callback_vars = json.loads(bytes(
-            callbackinfo, "utf-8").decode("unicode_escape").replace("[", "").replace("]", ""))    # noqa: E501
+        callback_vars = json.loads(callbackinfo.replace("'", '"'))  # noqa: E501
         url = r"{planUri}/{projectId}/_apis/distributedtask/hubs/{hubName}/plans/{planId}/events?api-version=2.0-preview.1".format(                           # noqa: E501
             planUri=callback_vars["PlanUri"], projectId=callback_vars["ProjectId"], hubName=callback_vars["HubName"], planId=callback_vars["PlanId"])          # noqa: E501
         data = {'name': 'TaskCompleted',
@@ -244,4 +243,4 @@ def tacosandburritos_train(
 
 
 if __name__ == '__main__':
-    compiler.Compiler().compile(tacosandburritos_train, 'pipline.tar.gz')
+    compiler.Compiler().compile(tacosandburritos_train, 'pipeline.tar.gz')
