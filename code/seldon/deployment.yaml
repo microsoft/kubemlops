@@ -1,0 +1,28 @@
+
+apiVersion: machinelearning.seldon.io/v1alpha2
+kind: SeldonDeployment
+metadata:
+  name: mexicanfood
+spec:
+  name: mexicanfood-deployment
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+        - env:
+            - name: PREDICTIVE_UNIT_SERVICE_PORT
+              value: "8080"
+          image: eugenefedorenko/samplemodel:seldon
+          name: mexicanfood-classifier
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8080
+            name: http
+    graph:
+      children: []
+      endpoint:
+        type: REST
+        service_port: 8080
+      name: mexicanfood-classifier
+    name: mexicanfood-predictor
+    replicas: 1

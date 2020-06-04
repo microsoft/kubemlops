@@ -1,0 +1,12 @@
+name: custom
+namespace: serving
+image:
+  name: eugenefedorenko/samplemodel
+  tag: custom
+limits:
+  cpu: 1
+  memory: 4Gi
+requests:
+  cpu: 1
+  memory: 4Gi
+

@@ -7,6 +7,60 @@ jobs:
   deploy_to_qa:
     runs-on: ubuntu-latest
 
+    
+    # TODO: refactor into two jobs
+    #       build image and deploy the inference
+    steps:    
+    - name: Copy Repository Contents
+      uses: actions/checkout@master
+
+    - name: Install Python dependencies
+      run: |
+        pip3 install requests --upgrade
+
+
+    - name: Handle Deploy Event
+      id: deh
+      run: |
+        python3 event_dispatcher.py --event_type "deploy"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: .github/events
+
+    - name: Download model
+      run: |
+        cd $GITHUB_WORKSPACE/code/kfserving/custom        
+        mlflow_run_id=$(curl -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
+        curl -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5    
+      env:
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        MLFLOW_EXPERIMENT: ${{ secrets.MLFLOW_EXPERIMENT }}       
+
+
+    - name: Build Scoring image
+      run: |
+        cd $GITHUB_WORKSPACE/code/kfserving/custom
+        ls -ltr
+        echo ${{ secrets.DOCKER_PWD}} | docker login --username ${{ secrets.DOCKER_USER }} --password-stdin
+        docker build $GITHUB_WORKSPACE/code/kfserving/custom -t ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
+        docker push ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
+      env:
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
+
+    
+    - name: Deploy Model to KFServing
+      uses: WyriHaximus/github-action-helm3@master
+      with:      
+        exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/kfserving/custom/chart --install --set=image.tag=$RUN_ID
+        kubeconfig: ${{ secrets.KUBECONFIG }}        
+      env:
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
+        
+
+  deploy_to_uat:
+    runs-on: ubuntu-latest
+    needs: deploy_to_qa
+
     steps:    
     - name: Copy Repository Contents
       uses: actions/checkout@master

@@ -67,18 +67,11 @@ def main():
     client = kfp.Client(host=args.kfp_host, existing_token=token)
 
     pipeline_file = os.path.join(pipeline_file_path)
-    try:
-        # We upload a new pipline every time with a run_id in the pipeline name
-        # until the issue with uploading a pipeline version is resolved
-        # see  https://github.com/kubeflow/pipelines/issues/3442
-        pipeline = client.pipeline_uploads.upload_pipeline(pipeline_file, name=pipeline_name)  # noqa: E501
-        return pipeline.id
-
-    except TypeError as err:
-        print("An error related to this issue https://github.com/kubeflow/pipelines/issues/3441 {0}".format(err))  # noqa: E501
-    # pipeline_version = client.pipeline_uploads.upload_pipeline_version(pipeline_file,  # noqa: E501  # noqa: E501
-    #                                                                    name="Version1",  # noqa: E501  # noqa: E501
-    #                                                                    pipelineid=pipeline.id)  # noqa: E501  # noqa: E501
+    # We upload a new pipline every time with a run_id in the pipeline name
+    # until the issue with uploading a pipeline version is resolved
+    # see  https://github.com/kubeflow/pipelines/issues/3442
+    pipeline = client.pipeline_uploads.upload_pipeline(pipeline_file, name=pipeline_name)  # noqa: E501
+    return pipeline.id
 
 
 if __name__ == '__main__':

@@ -1,0 +1,5 @@
+kfserving==0.3.0
+numpy
+tensorflow==2.0.0-alpha0
+Pillow
+requests

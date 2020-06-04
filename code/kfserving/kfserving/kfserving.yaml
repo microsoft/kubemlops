@@ -1,0 +1,17 @@
+apiVersion: serving.kubeflow.org/v1alpha2
+kind: InferenceService
+metadata:
+  name: mexicanfood
+spec:
+  default:
+    predictor:
+      custom:
+        container:
+          image: eugenefedorenko/samplemodel:kfserving
+          resources:
+              limits:
+                cpu: "1"
+                memory: 4Gi
+              requests:
+                cpu: "1"
+                memory: 4Gi
