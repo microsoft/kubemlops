@@ -5,7 +5,8 @@ This is a Work in Progress template for deploying:
 1. A single Azure Container Registry with geo replication
 2. A single Azure Kubernetes Service Cluster and supporting infrastructure
 3. Currently Flux is also deployed to the above AKS cluster
-4. WIP - [ArgoCd](https://github.com/argoproj/argo-cd) deployment on cluster
+4. WIP - [ArgoCD](https://github.com/argoproj/argo-cd) deployment on cluster
+   1. [MinIO](https://min.io/) server for supporting ArgoCD
 
 These templates are leaning heavily on [Bedrock](https://github.com/microsoft/bedrock) terraform [templates](https://github.com/microsoft/bedrock/tree/master/cluster). 
 
@@ -26,9 +27,10 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
     - via snap: `snap install kubectl --classic`
   - **MacOS**:
     - via homebrew: `brew install kubectl`
-- TBD: [Argo CLI](https://argoproj.github.io/argo-cd/cli_installation/)
+- TBD: [Argo CLI](https://github.com/argoproj/argo/releases)
   - **MacOS**:
-    - via homebrew: `brew install argoproj/tap/argocd`
+    - via homebrew: `brew install argoproj/tap/argo`
+- [Helm v3](https://helm.sh/) - install scripts _should_ download.
 
 ## Steps for deployment:
 - Az Login
@@ -38,3 +40,7 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
 - `terraform init`
 - `terraform plan -var-file *.tfvars`
 - `terraform apply -var-file *.tfvars`
+
+
+## Argo Sample Workoflows:
+https://argoproj.github.io/docs/argo/getting-started.html#4-run-sample-workflows
