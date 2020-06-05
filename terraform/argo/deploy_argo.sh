@@ -10,8 +10,12 @@
 
 # Deploy Argo to connected k8s cluster
 kubectl create namespace argodev
+
+# Set context
+# kubectl config set-context --current --namespace argodev
+
 kubectl apply -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/install.yaml --namespace argodev
-kubectl create rolebinding default-admin --clusterrole=admin --serviceaccount=default:default --namespace argodev
+kubectl create rolebinding default-admin --clusterrole=admin --serviceaccount=argodev:default --namespace argodev
 
 # role for argo-server
 kubectl create rolebinding argodev-admin --clusterrole=admin --serviceaccount=argodev:argo-server --namespace argodev

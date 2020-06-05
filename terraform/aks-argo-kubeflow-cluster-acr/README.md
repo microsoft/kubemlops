@@ -27,9 +27,9 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
     - via snap: `snap install kubectl --classic`
   - **MacOS**:
     - via homebrew: `brew install kubectl`
-- TBD: [Argo CLI](https://github.com/argoproj/argo/releases)
+- TBD: [Argo CLI](https://argoproj.github.io/argo-cd/cli_installation/)
   - **MacOS**:
-    - via homebrew: `brew install argoproj/tap/argo`
+    - via homebrew: `brew tap argoproj/tap && brew install argoproj/tap/argocd`
 - [Helm v3](https://helm.sh/) - install scripts _should_ download.
 
 ## Steps for deployment:
