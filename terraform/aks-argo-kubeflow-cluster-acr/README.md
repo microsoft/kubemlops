@@ -5,12 +5,13 @@ This is a Work in Progress template for deploying:
 1. A single Azure Container Registry with geo replication
 2. A single Azure Kubernetes Service Cluster and supporting infrastructure
 3. Currently Flux is also deployed to the above AKS cluster
-4. WIP - [ArgoCD](https://github.com/argoproj/argo-cd) deployment on cluster
+4. WIP - [Argo](https://github.com/argoproj/argo) deployment on cluster
    1. [MinIO](https://min.io/) server for supporting ArgoCD
+5. WIP - [ArgoCD](https://github.com/argoproj/argo-cd) deployment on cluster
 
 These templates are leaning heavily on [Bedrock](https://github.com/microsoft/bedrock) terraform [templates](https://github.com/microsoft/bedrock/tree/master/cluster). 
 
-Additionally, these templates will only deploy to an existing Azure Resource Group. This practice prevents terraform from destroying any other resources that may be added to a Terraform created Resource Group in the future.
+Additionally, these templates will only deploy to an existing Azure Resource Group. This practice prevents Terraform from destroying any other resources that may be added to a Terraform created Resource Group in the future.
 
 ## Requirements:
 - [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest)
@@ -27,10 +28,11 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
     - via snap: `snap install kubectl --classic`
   - **MacOS**:
     - via homebrew: `brew install kubectl`
-- TBD: [Argo CLI](https://argoproj.github.io/argo-cd/cli_installation/)
+- [Helm v3](https://helm.sh/) - install scripts _should_ download.
+- TBD: [ArgoCD CLI](https://argoproj.github.io/argo-cd/cli_installation/)
   - **MacOS**:
     - via homebrew: `brew tap argoproj/tap && brew install argoproj/tap/argocd`
-- [Helm v3](https://helm.sh/) - install scripts _should_ download.
+- TBD: [Argo CLI](https://github.com/argoproj/argo/releases)
 
 ## Steps for deployment:
 - Az Login
@@ -41,6 +43,17 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
 - `terraform plan -var-file *.tfvars`
 - `terraform apply -var-file *.tfvars`
 
-
 ## Argo Sample Workoflows:
 https://argoproj.github.io/docs/argo/getting-started.html#4-run-sample-workflows
+
+## TODOs
+- Link Argo module
+  - Optionally, add flag to disable/skip this module
+- Link ArgoCD module
+  - Optionally, add flag to disable/skip this module
+- Clean up tf varabile files
+- Clean up sample .tfvars files
+- TBD: unlink/disable flux
+- TBD: Explore KubeFlow
+- TBD: Explore MLFlow
+- TBD: default Istio configuration through terraform module OR fabrikate component

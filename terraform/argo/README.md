@@ -1,6 +1,6 @@
 # Argo
 
-This Work in Progress module will install [Argo](https://argoproj.github.io/) on a Kubernetes cluster along with a [MinIO](https://min.io/) server.
+This Work in Progress Terraform module will install [Argo](https://argoproj.github.io/) on a Kubernetes cluster along with a [MinIO](https://min.io/) server.
 
 
 ## TODO:
