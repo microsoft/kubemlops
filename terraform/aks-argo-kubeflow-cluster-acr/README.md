@@ -46,6 +46,12 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
 ## Argo Sample Workoflows:
 https://argoproj.github.io/docs/argo/getting-started.html#4-run-sample-workflows
 
+## ArgoCD Sample Workflows:
+https://github.com/argoproj/argocd-example-apps
+
+## Sample workflow with Argo & ArgoCD:
+https://github.com/SeldonIO/seldon-core/tree/master/examples/cicd/cicd-argocd
+
 ## TODOs
 - Link Argo module
   - Optionally, add flag to disable/skip this module
