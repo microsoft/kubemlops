@@ -31,7 +31,7 @@ ARGO_SERVER_POD_NAME=$(kubectl get pods -l app.kubernetes.io/name=argocd-server 
 # kubectl apply -f argocd-server-loadbalancer.yaml
 
 # Portforward to access UI/connect CLI
-sleep 5
+while [[ $(kubectl get pods -l app.kubernetes.io/name=argocd-server -o 'jsonpath={..status.conditions[?(@.type=="Ready")].status}') != "True" ]]; do echo "waiting for argocd-server pod." && sleep 3; done
 kubectl port-forward svc/argocd-server 8080:443 &
 PORT_FORWARD_PID=$!
 sleep 3

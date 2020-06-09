@@ -1,4 +1,4 @@
-# Repository to configure Argo to point to.
+# A repository to configure Argo to point to, more can be added later
 variable "argo_cd_repo" {
   description = "ssh git clone repository URL with Kubernetes manifests including services which runs in the cluster. ArgoCD monitors this repo resources and changes to sync them to the cluster."
   type        = string
