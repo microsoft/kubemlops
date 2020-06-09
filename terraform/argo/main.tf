@@ -1,5 +1,5 @@
 module "common-provider" {
-  source = "../provider"
+  source = "github.com/microsoft/bedrock/cluster/common/provider"
 }
 
 resource "null_resource" "deploy_argo" {
