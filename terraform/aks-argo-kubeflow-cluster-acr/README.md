@@ -35,13 +35,14 @@ Additionally, these templates will only deploy to an existing Azure Resource Gro
 - TBD: [Argo CLI](https://github.com/argoproj/argo/releases)
 
 ## Steps for deployment:
-- Az Login
-- Create Service Principal
-- Create SSH key for cluster/git repository persmissions
-- Configure `.tfvars` file
-- `terraform init`
-- `terraform plan -var-file *.tfvars`
-- `terraform apply -var-file *.tfvars`
+- Az Login: `az login`
+- Optional; set subscription: `az account set --subscription <your-subscription-id>`
+- Create Service Principal: `az ad sp create-for-rbac -n mtarng-databricks-test-sp`
+- Create SSH key for cluster/git repository persmissions: `ssh-keygen` in template directory.
+- Copy and configure `terraform.tfvars` file.
+- Initalize Terraform: `terraform init`
+- Optional; Perform "dry-run": `terraform plan -var-file your-terraform-file.tfvars`
+- Apply Terraform templates: `terraform apply -var-file your-terraform-file.tfvars`
 
 ## Argo Sample Workoflows:
 https://argoproj.github.io/docs/argo/getting-started.html#4-run-sample-workflows
