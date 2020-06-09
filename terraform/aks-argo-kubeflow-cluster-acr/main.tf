@@ -36,22 +36,20 @@ module "subnet" {
   address_prefix       = [var.subnet_prefix]
 }
 
-module "aks-gitops" {
-  source = "github.com/microsoft/bedrock/cluster/azure/aks-gitops"
+# AKS with Argo CD as GitOps operator
+module "aks-argocd" {
+  source = "../aks-argocd"
 
-  acr_enabled              = var.acr_enabled
+  argo_cd_repo             = var.argo_cd_repo
+  argo_cd_namespace        = var.argo_cd_namespace
+  argo_cd_recreate         = var.argo_cd_recreate
+  enable_argo_cd           = var.enable_argo_cd
+
   agent_vm_count           = var.agent_vm_count
   agent_vm_size            = var.agent_vm_size
   cluster_name             = var.cluster_name
   dns_prefix               = var.dns_prefix
-  flux_recreate            = var.flux_recreate
-  gc_enabled               = var.gc_enabled
-  gitops_ssh_url           = var.gitops_ssh_url
   gitops_ssh_key_path      = var.gitops_ssh_key_path
-  gitops_path              = var.gitops_path
-  gitops_poll_interval     = var.gitops_poll_interval
-  gitops_label             = var.gitops_label
-  gitops_url_branch        = var.gitops_url_branch
   ssh_public_key           = var.ssh_public_key
   resource_group_name      = data.azurerm_resource_group.resource_group.name
   service_principal_id     = var.service_principal_id

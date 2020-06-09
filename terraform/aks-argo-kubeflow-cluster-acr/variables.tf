@@ -32,9 +32,24 @@ variable "acr_enabled" {
   default = "true"
 }
 
-variable "gc_enabled" {
+variable "enable_argo_cd" {
   type    = string
   default = "true"
+}
+
+variable "argo_cd_repo" {
+  type        = string
+}
+
+variable "argo_cd_namespace" {
+  type        = string
+  default     = "argocd"
+}
+
+variable "argo_cd_recreate" {
+  description = "Make any change to this value to trigger the recreation of the argo_cd execution script."
+  type        = string
+  default     = "false"
 }
 
 variable "cluster_name" {
@@ -45,28 +60,8 @@ variable "dns_prefix" {
   type = string
 }
 
-variable "flux_recreate" {
-  description = "Make any change to this value to trigger the recreation of the flux execution script."
-  type        = string
-  default     = "false"
-}
-
-variable "gitops_ssh_url" {
-  type = string
-}
-
 variable "gitops_ssh_key_path" {
   type = string
-}
-
-variable "gitops_path" {
-  type    = string
-  default = ""
-}
-
-variable "gitops_url_branch" {
-  type    = string
-  default = "master"
 }
 
 variable "kubernetes_version" {
@@ -93,11 +88,6 @@ variable "service_principal_secret" {
 variable "gitops_poll_interval" {
   type    = string
   default = "5m"
-}
-
-variable "gitops_label" {
-  type    = string
-  default = "flux-sync"
 }
 
 variable "vnet_name" {
