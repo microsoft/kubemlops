@@ -1,0 +1,21 @@
+# Pipeline to build and push Jupyter server image.
+
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+ - group: kubeflow-azdo-sample
+
+jobs:
+    - job:
+      steps:
+      - task: Docker@2
+        displayName: Build and Push Jupyter Server Image
+        inputs:
+          containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+          repository: 'experimentation/jupyterserver'
+          command: 'buildAndPush'
+          Dockerfile: 'setup/jupyter/Dockerfile'
+          buildContext: 'setup/jupyter/'
+          tags: 'latest'

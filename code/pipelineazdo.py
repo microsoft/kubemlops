@@ -234,10 +234,9 @@ def tacosandburritos_train(
             op_1.container.set_image_pull_policy("Always")
             op_1.add_volume(
                 k8s_client.V1Volume(
-                name='azure',
-                persistent_volume_claim=k8s_client.V1PersistentVolumeClaimVolumeSource(  # noqa: E501
-                    claim_name='azure-managed-file')
-                )
+                    name='azure',
+                    persistent_volume_claim=k8s_client.V1PersistentVolumeClaimVolumeSource(claim_name='azure-managed-file')  # noqa: E501
+                    )
             ).add_volume_mount(k8s_client.V1VolumeMount(
                 mount_path='/mnt/azure', name='azure'))
 
