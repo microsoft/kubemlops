@@ -56,12 +56,16 @@ jobs:
     - name: Deploy Model to SeldonCore
       uses: WyriHaximus/github-action-helm3@master
       with:      
-        exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/seldon/chart --install --set=image.tag=$RUN_ID
+        # exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/seldon/chart --install --set=image.tag=$RUN_ID
+        exec: helm template $GITHUB_WORKSPACE/code/seldon/chart --set=image.tag=$RUN_ID > deployment.yaml
         kubeconfig: ${{ secrets.KUBECONFIG }}        
       env:
         # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
         RUN_ID: test
         
+    - name: Check
+      run: |
+        cat deployment.yaml
 
   deploy_to_uat:
     runs-on: ubuntu-latest
