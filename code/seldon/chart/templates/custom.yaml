@@ -11,7 +11,7 @@ spec:
         containers:
         - env:
             - name: PREDICTIVE_UNIT_SERVICE_PORT
-              value: {{ .Values.port }}
+              value: "{{ .Values.port }}"
           image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
           name: {{ .Values.name }}-classifier
           imagePullPolicy: Always
@@ -26,5 +26,3 @@ spec:
       name: {{ .Values.name }}-classifier
     name: {{ .Values.name }}-predictor
     replicas: 1
-    
-
