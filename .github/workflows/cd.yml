@@ -21,13 +21,13 @@ jobs:
         pip3 install requests --upgrade
 
 
-    - name: Handle Deploy Event
-      id: deh
-      run: |
-        python3 event_dispatcher.py --event_type "deploy"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      working-directory: .github/events
+    # - name: Handle Deploy Event
+    #   id: deh
+    #   run: |
+    #     python3 event_dispatcher.py --event_type "deploy"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   working-directory: .github/events
 
     - name: Download model
       run: |
@@ -35,7 +35,8 @@ jobs:
         mlflow_run_id=$(curl -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
         curl -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5    
       env:
-        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        RUN_ID: test
         MLFLOW_EXPERIMENT: ${{ secrets.MLFLOW_EXPERIMENT }}       
 
 
