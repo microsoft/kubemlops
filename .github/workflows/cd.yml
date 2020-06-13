@@ -1,7 +1,5 @@
 name: CD
 on:
-  push:
-    branches: [eedorenko/ci-cd-fix]
   repository_dispatch:
     types: [Model is registered]
     
@@ -21,13 +19,13 @@ jobs:
         pip3 install requests --upgrade
 
 
-    # - name: Handle Deploy Event
-    #   id: deh
-    #   run: |
-    #     python3 event_dispatcher.py --event_type "deploy"
-    #   env:
-    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    #   working-directory: .github/events
+    - name: Handle Deploy Event
+      id: deh
+      run: |
+        python3 event_dispatcher.py --event_type "deploy"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      working-directory: .github/events
 
     - name: Download model
       run: |
@@ -35,8 +33,7 @@ jobs:
         mlflow_run_id=$(curl -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
         curl -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5    
       env:
-        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
-        RUN_ID: 13da6621-9a5e-4c79-a8fc-baa4270513b1
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
         MLFLOW_EXPERIMENT: ${{ secrets.MLFLOW_EXPERIMENT }}       
 
 
@@ -48,8 +45,7 @@ jobs:
         docker build $GITHUB_WORKSPACE/code/seldon -t ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
         docker push ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
       env:
-        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}  
-        RUN_ID: 13da6621-9a5e-4c79-a8fc-baa4270513b1      
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}  
         
 
     
@@ -57,16 +53,10 @@ jobs:
       uses: WyriHaximus/github-action-helm3@master
       with:      
         exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/seldon/chart --install --set=image.tag=$RUN_ID
-        # exec: helm template $GITHUB_WORKSPACE/code/seldon/chart --set=image.tag=$RUN_ID > deployment.yaml
         kubeconfig: ${{ secrets.KUBECONFIG }}        
       env:
-        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
-        RUN_ID: 13da6621-9a5e-4c79-a8fc-baa4270513b1
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
         
-    - name: Check
-      run: |
-        cat deployment.yaml
-
   deploy_to_uat:
     runs-on: ubuntu-latest
     needs: deploy_to_qa
