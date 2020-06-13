@@ -26,3 +26,5 @@ spec:
       name: mexicanfood-classifier
     name: mexicanfood-predictor
     replicas: 1
+
+    

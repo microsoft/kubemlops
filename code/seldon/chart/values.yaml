@@ -1,5 +1,5 @@
 name: mexicanfood
-namespace: kubemlops
+namespace: serving
 image:
   name: eugenefedorenko/samplemodel
   tag: seldon
