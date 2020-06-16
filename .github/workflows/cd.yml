@@ -1,5 +1,8 @@
 name: CD
 on:
+  push:
+    branches: [eedorenko/ci-cd-fix]
+
   repository_dispatch:
     types: [Model is registered]
     
@@ -19,13 +22,13 @@ jobs:
         pip3 install requests --upgrade
 
 
-    - name: Handle Deploy Event
-      id: deh
-      run: |
-        python3 event_dispatcher.py --event_type "deploy"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      working-directory: .github/events
+    # - name: Handle Deploy Event
+    #   id: deh
+    #   run: |
+    #     python3 event_dispatcher.py --event_type "deploy"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    #   working-directory: .github/events
 
     - name: Download model
       run: |
@@ -33,7 +36,8 @@ jobs:
         mlflow_run_id=$(curl -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
         curl -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5    
       env:
-        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        RUN_ID: b8ffcc49-2697-4c6c-b2e4-6b6c29159e1d
         MLFLOW_EXPERIMENT: ${{ secrets.MLFLOW_EXPERIMENT }}       
 
 
@@ -45,7 +49,8 @@ jobs:
         docker build $GITHUB_WORKSPACE/code/seldon -t ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
         docker push ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
       env:
-        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}  
+        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        RUN_ID: b8ffcc49-2697-4c6c-b2e4-6b6c29159e1d
         
 
     
@@ -55,7 +60,8 @@ jobs:
         exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/seldon/chart --install --set=image.tag=$RUN_ID
         kubeconfig: ${{ secrets.KUBECONFIG }}        
       env:
-        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
+        # RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
+        RUN_ID: b8ffcc49-2697-4c6c-b2e4-6b6c29159e1d
 
   deploy_to_uat:
     runs-on: ubuntu-latest
