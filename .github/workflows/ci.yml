@@ -6,7 +6,7 @@ name: CI
 #  - PR comment "/build-pipeline" (code_quality_checks + build kfp pipeline)
 on:
   push:
-    branches: [master]
+    branches: [eedorenko/ci-cd-fix]
   pull_request:
     branches: [master]
   issue_comment:
@@ -42,135 +42,135 @@ jobs:
         with:
           path: code
 
-  build_images:
-    runs-on: ubuntu-latest
-    needs: code_quality_checks
-    if: github.event_name == 'push' || github.event_name == 'issue_comment'
-    steps:
-      - name: Build Databricks Notebook Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: databricks-notebook
-          # The folder in the Github repo that holds the source
-          folder: code/databricks
-      - name: Build Preprocess Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: preprocess
-          # The folder in the Github repo that holds the source
-          folder: code/preprocess
+  # build_images:
+  #   runs-on: ubuntu-latest
+  #   needs: code_quality_checks
+  #   if: github.event_name == 'push' || github.event_name == 'issue_comment'
+  #   steps:
+  #     - name: Build Databricks Notebook Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: databricks-notebook
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/databricks
+  #     - name: Build Preprocess Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: preprocess
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/preprocess
 
-      - name: Build Register KF Artifacts Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: registerartifacts
-          # The folder in the Github repo that holds the source
-          folder: code/register-artifacts
+  #     - name: Build Register KF Artifacts Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: registerartifacts
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/register-artifacts
 
-      - name: Build AML Register Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: register
-          # The folder in the Github repo that holds the source
-          folder: code/register
+  #     - name: Build AML Register Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: register
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/register
 
-      - name: Build MLFlow Register Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: register-mlflow
-          # The folder in the Github repo that holds the source
-          folder: code/register-mlflow
+  #     - name: Build MLFlow Register Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: register-mlflow
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/register-mlflow
 
-      - name: Build Training Image
-        if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
-        uses: ams0/acr-task-github-action@v1
-        with:
-          # Service Principal with Contributor role on the ACR
-          service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
-          # Service Principal password
-          service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
-          # Azure Container Registry tenant
-          tenant: ${{ secrets.TENANT }}
-          # The name of the ACR, minus the .azurecr.io
-          registry: ${{ env.ACR_REGISTRY }}
-          # Repository to use
-          repository: ${{ env.ACR_REPOSITORY }}
-          branch: ${{ needs.code_quality_checks.outputs.event_sha }}
-          tag: latest
-          # Docker image name
-          image: training
-          # The folder in the Github repo that holds the source
-          folder: code/training
+  #     - name: Build Training Image
+  #       if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
+  #       uses: ams0/acr-task-github-action@v1
+  #       with:
+  #         # Service Principal with Contributor role on the ACR
+  #         service_principal: ${{ secrets.SERVICE_PRINCIPAL }}
+  #         # Service Principal password
+  #         service_principal_password: ${{ secrets.SERVICE_PRINCIPAL_PWD }}
+  #         # Azure Container Registry tenant
+  #         tenant: ${{ secrets.TENANT }}
+  #         # The name of the ACR, minus the .azurecr.io
+  #         registry: ${{ env.ACR_REGISTRY }}
+  #         # Repository to use
+  #         repository: ${{ env.ACR_REPOSITORY }}
+  #         branch: ${{ needs.code_quality_checks.outputs.event_sha }}
+  #         tag: latest
+  #         # Docker image name
+  #         image: training
+  #         # The folder in the Github repo that holds the source
+  #         folder: code/training
 
   build_kfp_pipeline:
     env:
@@ -178,7 +178,8 @@ jobs:
       DATASETS: "https://aiadvocate.blob.core.windows.net/public/tacodata.zip"
 
     runs-on: ubuntu-latest
-    needs: [code_quality_checks, build_images]
+    # needs: [code_quality_checks, build_images]
+    needs: [code_quality_checks]
     if: github.event_name == 'push' || github.event_name == 'issue_comment' && contains(github.event.comment.body, '/build-pipeline')
     steps:
       - uses: actions/checkout@v2
