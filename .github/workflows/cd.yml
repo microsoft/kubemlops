@@ -56,10 +56,28 @@ jobs:
         kubeconfig: ${{ secrets.KUBECONFIG }}        
       env:
         RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
-        
+
   deploy_to_uat:
     runs-on: ubuntu-latest
     needs: deploy_to_qa
+    if: false
+    
+    steps:    
+    - name: Copy Repository Contents
+      uses: actions/checkout@master
+
+    
+    - name: Deploy Model to KFServing
+      uses: WyriHaximus/github-action-helm3@master
+      with:      
+        exec: helm upgrade ${{ secrets.DEPLOYMENT_NAME }} $GITHUB_WORKSPACE/code/kfserving/custom/chart --install --set=image.tag=$RUN_ID
+        kubeconfig: ${{ secrets.KUBECONFIG }}        
+      env:
+        RUN_ID: ${{ steps.deh.outputs.RUN_ID }}        
+
+  deploy_to_prod:
+    runs-on: ubuntu-latest
+    needs: deploy_to_uat
 
     steps:    
     - name: Copy Repository Contents
@@ -68,14 +86,6 @@ jobs:
     - name: Install Python dependencies
       run: |
         pip3 install requests --upgrade
-
-    - name: Handle Deploy Event
-      id: deh
-      run: |
-        python3 event_dispatcher.py --event_type "deploy"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      working-directory: .github/events
 
     - name: Azure Login
       uses: azure/login@v1
