@@ -1,0 +1,108 @@
+pr: none
+trigger: none
+
+variables:
+  - group: kubeflow-iac
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: "Provision_K8s_cluster"
+  displayName: "Provision K8s cluster"
+  jobs:
+    - job:
+      steps:  
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: '$(AZURE_SUBSCRIPTION)'
+          scriptType: 'bash'
+          scriptLocation: 'scriptPath'
+          scriptPath: 'setup/iac/aks-create.sh'
+          displayName: Create AKS instance
+
+- stage: "Install_K8s_applications"
+  displayName: "Install_K8s_applications"
+  jobs:
+    - job:
+      steps:  
+      - task: AzureCLI@2          
+        inputs:
+          azureSubscription: '$(AZURE_SUBSCRIPTION)'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            az aks get-credentials -n $AKS_NAME -g $RESOURCE_GROUP 
+          displayName: Get AKS credentials
+    
+      - task: Bash@3
+        name: "Install_Istio"
+        displayName: "Install Istio"
+        inputs:
+          targetType: 'inline'
+          script: |
+             curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$ISTIO_VERSION sh -
+             cd istio-$ISTIO_VERSION
+             export PATH=$PWD/bin:$PATH
+             istioctl manifest apply  --set profile=default
+      - task: Bash@3
+        name: "Install_KFP"
+        displayName: "Install Kubeflow Pipelines"
+        inputs:
+          filePath: 'setup/kfp/kubeflow-install.sh'
+          workingDirectory: 'setup/kfp'
+
+      - bash: |          
+          $(Build.SourcesDirectory)/setup/kfp/azure-credentials.sh
+        env:
+          AZ_CLIENT_SECRET: '$(AZ_CLIENT_SECRET)'
+        name: "Setup_Azure_credentials"
+        displayName: "Setup Azure credentials"
+
+      - bash: |          
+          $(Build.SourcesDirectory)/setup/kfp/ghcreds-secret.sh
+        env:
+          GITHUB_TOKEN: '$(GITHUB_TOKEN)'
+        name: "Setup_Github_credentials"
+        displayName: "Setup GitHub credentials"
+
+      - bash: |          
+          $(Build.SourcesDirectory)/setup/kfp/databricks-secret.sh
+        env:
+          DATABRICKS_TOKEN: '$(DATABRICKS_TOKEN)'
+        name: "Setup_Databricks_credentials"
+        displayName: "Setup Databricks credentials"
+
+      - task: Bash@3
+        name: "Setup_Kubemlops_bot"
+        displayName: "Setup Kubemlops bot"
+        inputs:
+          filePath: 'setup/kfp/kubemlopsbot.sh'
+          workingDirectory: 'setup/kfp'
+
+      - task: Bash@3
+        name: "Create_pvc"
+        displayName: "Create pvc"
+        inputs:
+          filePath: 'setup/kfp/pvc.sh'
+          workingDirectory: 'setup/kfp'
+
+      - task: Bash@3
+        displayName: 'Install Helm $HELM_VERSION'
+        inputs:
+          targetType: inline
+          script: wget -q https://get.helm.sh/helm-$HELM_VERSION-linux-amd64.tar.gz -O /tmp/helm-$HELM_VERSION-linux-amd64.tar.gz && tar -zxvf /tmp/helm-$HELM_VERSION-linux-amd64.tar.gz -C /tmp && sudo mv /tmp/linux-amd64/helm /usr/local/bin/helm
+
+      - task: Bash@3
+        name: "Install_MLFlow"
+        displayName: "Install MLFlow"
+        inputs:
+          filePath: 'setup/mlflow/mlflow.sh'
+          workingDirectory: 'setup/mlflow'
+
+      - task: Bash@3
+        name: "Install_Seldon"
+        displayName: "Install Seldon"
+        inputs:
+          filePath: 'setup/seldon/setup.sh'
+          workingDirectory: 'setup/seldon'
