@@ -1,0 +1,28 @@
+apiVersion: machinelearning.seldon.io/v1alpha2
+kind: SeldonDeployment
+metadata:
+  name: {{ .Values.name }}
+  namespace: {{ .Values.namespace }}
+spec:
+  name: {{ .Values.name }}-deployment
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+        - env:
+            - name: PREDICTIVE_UNIT_SERVICE_PORT
+              value: "{{ .Values.port }}"
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          name: {{ .Values.name }}-classifier
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: {{ .Values.port }}
+            name: http
+    graph:
+      children: []
+      endpoint:
+        type: REST
+        service_port: {{ .Values.port }}
+      name: {{ .Values.name }}-classifier
+    name: {{ .Values.name }}-predictor
+    replicas: 1

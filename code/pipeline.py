@@ -136,27 +136,27 @@ def tacosandburritos_train(
 
         #  train
         #  TODO: read set of parameters from config file
-        with dsl.ParallelFor([{'epochs': 1, 'lr': 0.0001}, {'epochs': 2, 'lr': 0.0002}, {'epochs': 3, 'lr': 0.0003}]) as item:  # noqa: E501
-            operations['training'] = dsl.ContainerOp(
-                name="training",
-                image=image_repo_name + '/training:latest',
-                command=['python'],
-                arguments=[
-                    '/scripts/train.py',
-                    '--base_path', persistent_volume_path,
-                    '--data', training_folder,
-                    '--epochs', item.epochs,
-                    '--batch', batch,
-                    '--image_size', image_size,
-                    '--lr', item.lr,
-                    '--outputs', model_folder,
-                    '--dataset', training_dataset
-                ],
-                output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
-                    'mlpipeline-metrics': '/mlpipeline-metrics.json',
-                    'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
-                }
-                ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)).add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet'))  # noqa: E501
+        # with dsl.ParallelFor([{'epochs': 1, 'lr': 0.0001}, {'epochs': 1, 'lr': 0.0002}]) as item:  # noqa: E501
+        operations['training'] = dsl.ContainerOp(
+            name="training",
+            image=image_repo_name + '/training:latest',
+            command=['python'],
+            arguments=[
+                '/scripts/train.py',
+                '--base_path', persistent_volume_path,
+                '--data', training_folder,
+                '--epochs', 2,
+                '--batch', batch,
+                '--image_size', image_size,
+                '--lr', 0.0001,
+                '--outputs', model_folder,
+                '--dataset', training_dataset
+            ],
+            output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
+                'mlpipeline-metrics': '/mlpipeline-metrics.json',
+                'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
+            }
+            ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)).add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet'))  # noqa: E501
 
         operations['training'].after(operations['preprocess'])
 

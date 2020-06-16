@@ -1,0 +1,6 @@
+name: mexicanfood
+namespace: serving
+image:
+  name: eugenefedorenko/samplemodel
+  tag: seldon
+port: 8080
