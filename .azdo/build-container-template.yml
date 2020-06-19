@@ -1,0 +1,35 @@
+# Template to check if the current version of the container source code has already been published.
+# If a match is found, the container will not be built.
+# If a match is not found, the container will be built, published, and tagged with a hash of the source code directory.
+
+parameters:
+    - name: dockerContext # folder containing Dockerfile
+      type: string
+    - name: acr # name of Azure Container Registry
+      type: string
+    - name: repository # name of container repository
+      type: string
+    
+steps:
+  - task: AzureCLI@1
+    displayName: Build and Push ${{ parameters.repository }}
+    inputs:
+      azureSubscription: $(AZURE_SUBSCRIPTION)
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -euxo pipefail  # fail on error
+
+        # Generate an tag with a reproducible checksum of all files in $dockerContext by doing a checksum of all files
+        # in alphabetical order, then another checksum of their names and checksums.
+        imageTag=$(find "${{ parameters.dockerContext }}" -type f -exec md5sum {} \; | sort -k 2 | md5sum | cut -f1 -d ' ')
+
+        # If the image with the generated tag doesn't already exist, build it.
+        if ! az acr repository show -n ${{ parameters.acr }} --image "${{ parameters.repository }}:$imageTag" -o table; then
+          echo No match found. Container will be built.
+          echo Tag for new container: $imageTag
+          az acr build \
+            -r ${{ parameters.acr }} \
+            -t "${{ parameters.repository }}:$imageTag" \
+            -t "${{ parameters.repository }}:latest" \
+            ${{ parameters.dockerContext }}
+        fi
