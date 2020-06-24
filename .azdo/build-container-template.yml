@@ -3,33 +3,41 @@
 # If a match is not found, the container will be built, published, and tagged with a hash of the source code directory.
 
 parameters:
-    - name: dockerContext # folder containing Dockerfile
-      type: string
-    - name: acr # name of Azure Container Registry
-      type: string
-    - name: repository # name of container repository
-      type: string
-    
+  - name: sourceLocation # source code directory path
+    type: string
+  - name: dockerFile # relative path to Dockerfile from sourceLocation
+    type: string
+  - name: containerReferences # space (' ') delimited set of files or folders in sourceLocation to check for changes
+    type: string
+  - name: acr # name of Azure Container Registry
+    type: string
+  - name: repository # name of container repository
+    type: string
+  
 steps:
-  - task: AzureCLI@1
-    displayName: Build and Push ${{ parameters.repository }}
-    inputs:
-      azureSubscription: $(AZURE_SUBSCRIPTION)
-      scriptLocation: inlineScript
-      inlineScript: |
-        set -euxo pipefail  # fail on error
+- task: AzureCLI@1
+  displayName: Build and Push ${{ parameters.repository }}
+  inputs:
+    azureSubscription: $(AZURE_SUBSCRIPTION)
+    scriptLocation: inlineScript
+    inlineScript: |
+      set -euxo pipefail  # fail on error
 
-        # Generate an tag with a reproducible checksum of all files in $dockerContext by doing a checksum of all files
-        # in alphabetical order, then another checksum of their names and checksums.
-        imageTag=$(find "${{ parameters.dockerContext }}" -type f -exec md5sum {} \; | sort -k 2 | md5sum | cut -f1 -d ' ')
+      # Generate an tag with a reproducible checksum of all files in $containerReferences by doing a checksum of all files
+      # in alphabetical order, then another checksum of their names and checksums.
+      # Running this command on windows-based infrastructure may return a different result due to CRLF
+      pushd ${{ parameters.sourceLocation }}
+      imageTag=$(find ${{ parameters.containerReferences }} -type f -exec md5sum {} \; | LC_COLLATE=C sort -k 2 | md5sum | cut -f1 -d ' ')
+      popd
 
-        # If the image with the generated tag doesn't already exist, build it.
-        if ! az acr repository show -n ${{ parameters.acr }} --image "${{ parameters.repository }}:$imageTag" -o table; then
-          echo No match found. Container will be built.
-          echo Tag for new container: $imageTag
-          az acr build \
-            -r ${{ parameters.acr }} \
-            -t "${{ parameters.repository }}:$imageTag" \
-            -t "${{ parameters.repository }}:latest" \
-            ${{ parameters.dockerContext }}
-        fi
+      # If the image with the generated tag doesn't already exist, build it.
+      if ! az acr repository show -n ${{ parameters.acr }} --image "${{ parameters.repository }}:$imageTag" -o table; then
+        echo No match found. Container will be built.
+        echo Tag for new container: $imageTag
+        az acr build \
+          -r ${{ parameters.acr }} \
+          -t "${{ parameters.repository }}:$imageTag" \
+          -t "${{ parameters.repository }}:latest" \
+          -f "${{ parameters.dockerFile }}" \
+          ${{ parameters.sourceLocation }}
+      fi
