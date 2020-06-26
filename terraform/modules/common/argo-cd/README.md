@@ -1,6 +1,5 @@
-# Argo
-
-This Work in Progress Terraform module will install [ArgoCD](https://argoproj.github.io/argo-cd/) on a Kubernetes cluster as well as add a single repository via the argoCD CLI.
+# ArgoCD
+This Terraform module will install [ArgoCD](https://argoproj.github.io/argo-cd/) on a Kubernetes cluster as well as add a single repository via the argoCD CLI.
 
 ## Managing ArgoCD
 To access the ArgoCD instance, you must either portforward the `argocd-server` pod or service, _or_ you can expose the service publically with a LoadBalancer.
@@ -20,4 +19,4 @@ Assuming `kubectl` is already configured to a kubernetes instance, run:
 
 ## TODO:
 - Investigate namespace. Verified to work with default namespace: `argocd`.
-- Investigate options for deploying the entire manifest repository as a single argoCD application and its configurations (root, branch, force sync, schedule etc.,)
+- Investigate options for deploying the entire manifest repository as a single argoCD application and its configurations (root, branch, force sync, schedule etc.)

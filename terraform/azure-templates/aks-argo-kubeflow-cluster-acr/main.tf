@@ -38,7 +38,7 @@ module "subnet" {
 
 # AKS with Argo CD as GitOps operator
 module "aks-argocd" {
-  source = "../aks-argocd"
+  source = "../../modules/azure/aks-argocd"
 
   argo_cd_repo             = var.argo_cd_repo
   argo_cd_namespace        = var.argo_cd_namespace

@@ -28,7 +28,7 @@ module "aks" {
 }
 
 module "argo_cd" {
-  source = "../argo-cd"
+  source = "../../common/argo-cd"
 
   argo_cd_repo             = var.argo_cd_repo
   argo_cd_namespace        = var.argo_cd_namespace

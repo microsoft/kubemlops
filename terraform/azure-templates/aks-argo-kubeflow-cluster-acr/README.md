@@ -9,7 +9,7 @@ This is a Work in Progress template for deploying:
    1. [MinIO](https://min.io/) server for supporting ArgoCD
 5. [ArgoCD](https://github.com/argoproj/argo-cd) deployment on cluster
 
-These templates are leaning heavily on [Bedrock](https://github.com/microsoft/bedrock) terraform [templates](https://github.com/microsoft/bedrock/tree/master/cluster). 
+These templates are leaning heavily on the [Bedrock](https://github.com/microsoft/bedrock) project's Terraform [templates and modules.](https://github.com/microsoft/bedrock/tree/master/cluster). 
 
 Additionally, these templates will only deploy to an existing Azure Resource Group. This practice prevents Terraform from destroying any other resources that may be added to a Terraform created Resource Group in the future.
 
@@ -61,6 +61,6 @@ https://github.com/SeldonIO/seldon-core/tree/master/examples/cicd/cicd-argocd
 - Clean up tf varabile files
 - Clean up sample .tfvars files
 - TBD: unlink/disable flux
-- TBD: Explore KubeFlow
+- TBD: Explore adding a KubeFlow module
 - TBD: Explore MLFlow
-- TBD: default Istio configuration through terraform module OR fabrikate component
+- TBD: Install default Istio configuration through terraform module OR a fabrikate component

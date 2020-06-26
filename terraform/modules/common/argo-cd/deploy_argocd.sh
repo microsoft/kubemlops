@@ -53,6 +53,3 @@ argocd repo add $REPO_URL \
 # Cleanup
 kill $PORT_FORWARD_PID
 echo "Successfully installed ArgoCD on the connected cluster!"
-
-# Sample command to run this script
-# sh deploy_argocd.sh -n 'argocd' -r 'git@ssh.dev.azure.com:v3/mitarng/cero-demo/fabrikam-manifests' -s '/Users/mtarng/Workspace/kubemlops/terraform/aks-argo-kubeflow-cluster-acr/tempssh/id_rsa'
