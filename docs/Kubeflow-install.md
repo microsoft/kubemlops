@@ -1,5 +1,10 @@
 # Kubeflow installation instruction
 
+## Connect to AKS
+
+* Login to Azure: az login
+* Create user credentials:  az aks get-credentials -n <AKS_NAME> -g <RESOURCE_GROUP_NAME>
+
 ## Install Istio (if not already installed on the cluster)
 
 (https://istio.io/docs/setup/getting-started/#download)
