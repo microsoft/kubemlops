@@ -54,23 +54,6 @@ def use_databricks_secret(secret_name='databricks-secret'):
     return _use_databricks_secret
 
 
-def azdocallback(callbackinfo):
-    if callbackinfo is not None:
-        import sys
-        import subprocess
-        subprocess.run([sys.executable, '-m', 'pip', 'install', 'requests'])
-        import requests                                                                   # noqa: F811,E501
-        import json                                                                       # noqa: F811,E501
-        callback_vars = json.loads(callbackinfo.replace("'", '"'))  # noqa: E501
-        url = r"{planUri}/{projectId}/_apis/distributedtask/hubs/{hubName}/plans/{planId}/events?api-version=2.0-preview.1".format(                           # noqa: E501
-            planUri=callback_vars["PlanUri"], projectId=callback_vars["ProjectId"], hubName=callback_vars["HubName"], planId=callback_vars["PlanId"])          # noqa: E501
-        data = {'name': 'TaskCompleted',
-                'taskId': callback_vars["TaskInstanceId"], 'jobId': callback_vars["JobId"], 'result': 'succeeded'}   # noqa: E501
-        header = {'Authorization': 'Bearer ' + callback_vars["AuthToken"]}
-        response = requests.post(url, json=data, headers=header)
-        print(response)
-
-
 def tacosandburritos_train(
     resource_group,
     workspace,
@@ -91,9 +74,24 @@ def tacosandburritos_train(
     model_folder = 'model'
     image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
     mlflow_url = 'http://mlflow:5000'
+    kfp_host_url = 'http://51.143.118.153/pipeline'
 
-    exitop = comp.func_to_container_op(azdocallback)
-    with dsl.ExitHandler(exit_op=exitop(azdocallbackinfo)):
+    exit_op = dsl.ContainerOp(
+        name='Exit Handler',
+        image=image_repo_name + '/azdocallback:latest',
+        command=['python'],
+        arguments=[
+            '/scripts/azdocallback.py',
+            '--kfp_host_url', kfp_host_url,
+            '--azdocallback', azdocallbackinfo,
+            '--run_id', dsl.RUN_ID_PLACEHOLDER,
+            '--tenant_id', "$(AZ_TENANT_ID)",
+            '--service_principal_id', "$(AZ_CLIENT_ID)",
+            '--service_principal_password', "$(AZ_CLIENT_SECRET)",
+        ]
+    ).apply(use_azure_secret())
+
+    with dsl.ExitHandler(exit_op=exit_op):
 
         operations['mlflowproject'] = dsl.ContainerOp(
             name='Run MLflow Project on Azure Databricks',

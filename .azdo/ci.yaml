@@ -49,6 +49,15 @@ stages:
         
         # Disabling building all other images, uncomment to include specific component from code\pipelineazdo.py
         # - task: Docker@2
+        #   displayName: Build and Push AzdoCallback Image
+        #   inputs:
+        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+        #     repository: 'mexicanfood/azdocallback'
+        #     command: 'buildAndPush'
+        #     Dockerfile: 'code/azdocallback/Dockerfile'
+        #     buildContext: 'code/azdocallback/'
+        #     tags: 'latest'
+        # - task: Docker@2
         #   displayName: Build and Push Preprocess Image
         #   inputs:
         #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'

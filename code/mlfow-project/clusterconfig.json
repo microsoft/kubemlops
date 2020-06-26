@@ -1,0 +1,5 @@
+{
+    "spark_version": "6.5.x-cpu-ml-scala2.11",
+    "node_type_id": "Standard_DS3_v2",
+    "num_workers": 4
+}
