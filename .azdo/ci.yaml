@@ -48,69 +48,69 @@ stages:
             tags: 'latest'
         
         # Disabling building all other images, uncomment to include specific component from code\pipelineazdo.py
-        # - task: Docker@2
-        #   displayName: Build and Push AzdoCallback Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/azdocallback'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/azdocallback/Dockerfile'
-        #     buildContext: 'code/azdocallback/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Preprocess Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/preprocess'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/preprocess/Dockerfile'
-        #     buildContext: 'code/preprocess/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Register Artifacts Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/registerartifacts'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/register-artifacts/Dockerfile'
-        #     buildContext: 'code/register-artifacts/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Register MLFlow Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/register-mlflow'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/register-mlflow/Dockerfile'
-        #     buildContext: 'code/register-mlflow/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Register Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/register'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/register/Dockerfile'
-        #     buildContext: 'code/register/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Training Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/training'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/training/Dockerfile'
-        #     buildContext: 'code/training/'
-        #     tags: 'latest'
-        # - task: Docker@2
-        #   displayName: Build and Push Databricks Image
-        #   inputs:
-        #     containerRegistry: 'kubeflow-azdo-sample-acr-sc'
-        #     repository: 'mexicanfood/databricks-notebook'
-        #     command: 'buildAndPush'
-        #     Dockerfile: 'code/databricks/Dockerfile'
-        #     buildContext: 'code/databricks/'
-        #     tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push AzdoCallback Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/azdocallback'
+            command: 'buildAndPush'
+            Dockerfile: 'code/azdocallback/Dockerfile'
+            buildContext: 'code/azdocallback/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Preprocess Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/preprocess'
+            command: 'buildAndPush'
+            Dockerfile: 'code/preprocess/Dockerfile'
+            buildContext: 'code/preprocess/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Register Artifacts Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/registerartifacts'
+            command: 'buildAndPush'
+            Dockerfile: 'code/register-artifacts/Dockerfile'
+            buildContext: 'code/register-artifacts/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Register MLFlow Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/register-mlflow'
+            command: 'buildAndPush'
+            Dockerfile: 'code/register-mlflow/Dockerfile'
+            buildContext: 'code/register-mlflow/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Register Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/register'
+            command: 'buildAndPush'
+            Dockerfile: 'code/register/Dockerfile'
+            buildContext: 'code/register/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Training Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/training'
+            command: 'buildAndPush'
+            Dockerfile: 'code/training/Dockerfile'
+            buildContext: 'code/training/'
+            tags: 'latest'
+        - task: Docker@2
+          displayName: Build and Push Databricks Image
+          inputs:
+            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            repository: 'mexicanfood/databricks-notebook'
+            command: 'buildAndPush'
+            Dockerfile: 'code/databricks/Dockerfile'
+            buildContext: 'code/databricks/'
+            tags: 'latest'
 
   - stage: "Build_Upload_Run_Kubeflow_Pipeline"
     displayName: 'Build, Upload, and Run Kubeflow Pipeline'

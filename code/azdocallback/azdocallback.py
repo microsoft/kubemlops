@@ -54,7 +54,7 @@ def get_access_token(tenant, clientId, client_secret):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Azure DevOps Callback')
-    parser.add_argument('-h', '--kfp_host_url',
+    parser.add_argument('-hst', '--kfp_host_url',
                         help='Kubeflow Host Url')
     parser.add_argument('-azcb', '--azdocallback',
                         help='Azure DevOps call back Info')
