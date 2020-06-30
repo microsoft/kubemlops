@@ -37,9 +37,9 @@ This documentation helps you get started with the sample from infrastructure set
 - [Kubeflow Installation on AKS](./docs/Kubeflow-install.md)
 - [Securing Kubeflow on AKS](./docs/Kubeflow-secure.md)
 - MLOps with GitHub
-  - [CI/Pull Request](.docs/ci-pullrequest.md)
-  - [CI/Training](.docs/ci-training.md)
-  - [CD/Seldon](.docs/ci-seldon.md)
+  - [CI/Pull Request](./docs/ci-pullrequest.md)
+  - [CI/Training](./docs/ci-training.md)
+  - [CD/Seldon](./docs/ci-seldon.md)
 
 Code for the following can be found in the code directory, but currently there is no documentation:
 
