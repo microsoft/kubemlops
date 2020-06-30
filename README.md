@@ -5,7 +5,7 @@
 The repository contains a sample created from the Kubeflow [End-to-End Pipeline Example on Azure](https://www.kubeflow.org/docs/azure/azureendtoend/). It builds a Kubeflow pipeline(KFP) with both GitHub actions and Azure DevOps that trains a Tensorflow model recognizing tacos and burritos images. The model is registered in MLFlow. Kubeflow is running on Azure Kubernetes Service(AKS). The structure of this sample should make it easier to “bring your own code” and adopt the template for a real-life machine learning(ML) project.
 
 The architecture of the sample is shown in the following diagram:
-![KubeMLOps Architecture Diagram](./docs/diagrams/diagrams.png)
+![KubeMLOps Architecture Diagram](./docs/diagrams/Diagrams.png)
 
 - The KFP contains the following steps:
   - Data preprocessing
