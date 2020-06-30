@@ -39,7 +39,7 @@ This documentation helps you get started with the sample from infrastructure set
 - MLOps with GitHub
   - [CI/Pull Request](./docs/ci-pullrequest.md)
   - [CI/Training](./docs/ci-training.md)
-  - [CD/Seldon](./docs/ci-seldon.md)
+  - [CD/Seldon](./docs/cd-seldon.md)
 
 Code for the following can be found in the code directory, but currently there is no documentation:
 
