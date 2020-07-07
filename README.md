@@ -30,20 +30,17 @@ Before you get started, make sure you have the following prerequisites:
 - Ensure the [latest](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest) version of Azure CLI is installed.
 - Clone or fork the repository
 
-This documentation helps you get started with the sample from infrastructure setup to deployment of the model.
-
 ## Setup
+
+This documentation helps you get started with the sample from infrastructure setup to deployment of the model.
 
 - [Kubeflow Installation on AKS](./docs/Kubeflow-install.md)
 - [Securing Kubeflow on AKS](./docs/Kubeflow-secure.md)
-- MLOps with GitHub
-  - [CI/Pull Request](./docs/ci-pullrequest.md)
-  - [CI/Training](./docs/ci-training.md)
-  - [CD/Seldon](./docs/cd-seldon.md)
+- [MLOps with GitHub](./docs/mlops-github.md)
+- [MLOps with Azure DevOps](./docs/mlops-azdo.md)
 
 Code for the following can be found in the code directory, but currently there is no documentation:
 
-- MLOps with Azure DevOps
 - Experiment Tracking
 - Running Kubeflow component in parallel
 - Running Jupyter Server within Kubeflow
