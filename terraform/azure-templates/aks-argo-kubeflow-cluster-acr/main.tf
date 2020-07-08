@@ -1,3 +1,8 @@
+provider "azurerm" {
+  version = "~2.8"
+  features {}
+}
+
 module "provider" {
   source = "github.com/microsoft/bedrock/cluster/azure/provider"
 }
@@ -30,10 +35,10 @@ module "vnet" {
 module "subnet" {
   source = "github.com/microsoft/bedrock/cluster/azure/subnet"
 
-  subnet_name          = ["${var.cluster_name}-aks-subnet"]
+  subnet_name          = "${var.cluster_name}-aks-subnet"
   vnet_name            = module.vnet.vnet_name
   resource_group_name  = data.azurerm_resource_group.resource_group.name
-  address_prefix       = [var.subnet_prefix]
+  address_prefixes     = [var.subnet_prefix]
 }
 
 # AKS with Argo CD as GitOps operator
@@ -54,7 +59,7 @@ module "aks-argocd" {
   resource_group_name      = data.azurerm_resource_group.resource_group.name
   service_principal_id     = var.service_principal_id
   service_principal_secret = var.service_principal_secret
-  vnet_subnet_id           = tostring(element(module.subnet.subnet_ids, 0))
+  vnet_subnet_id           = module.subnet.subnet_id
   service_cidr             = var.service_cidr
   dns_ip                   = var.dns_ip
   docker_cidr              = var.docker_cidr
