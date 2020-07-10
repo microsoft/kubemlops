@@ -1,0 +1,115 @@
+pr: none
+trigger: none
+
+resources:
+  pipelines:
+  - pipeline: ci   # Name of the pipeline resource
+    source: kubeflow-azdo-ci # Name of the triggering pipeline
+    trigger: 
+      branches:
+      - master
+
+variables:
+- group: kubeflow-azdo-sample
+  
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+- stage: "Deploy_to_QA"
+  displayName: "Deploy to QA"
+  jobs:
+  - job:
+    displayName: "Deploy to SeldonCore"
+    steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.7'
+      displayName: 'Use Python 3.7'
+    - script: |
+        pip install requests --upgrade
+      displayName: Install Python Dependencies
+    # - download: ci
+    #  condition: and(succeeded(), eq(variables['Build.Reason'], 'ResourceTrigger'))
+    #  artifact: kubeflow_run
+    #  displayName: "Download artifacts from CI build"
+    - script: |
+        if [ -n "$(KF_RUN_ID)" ]; then
+          # Get run id from pipeline variable
+          echo '##vso[task.setvariable variable=RUN_ID]$(KF_RUN_ID)'
+        elif [ -f "$(Pipeline.Workspace)/kubeflow_run/id" ]; then
+          # Get run id from pipeline artifact
+          run_id=`cat $(Pipeline.Workspace)/kubeflow_run/id`
+          echo '##vso[task.setvariable variable=RUN_ID]$run_id'
+        else
+          printf '%s\n' "Please set KF_RUN_ID or use the CI pipeline to trigger this pipeline" >&2
+          exit 1
+        fi
+      name: "get_run_id"
+      displayName: "Get run id"
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          set -euxo pipefail
+          cd "$(Build.SourcesDirectory)/code/seldon"
+          mlflow_run_id=`curl -d '{"experiment_ids":['$(MLFLOW_EXPERIMENT)'],"filter":"tags.external_run_id='\'''$(RUN_ID)''\''"}' $(KF_ENDPOINT_ASYNC)/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id'`
+          curl -L '$(KF_ENDPOINT_ASYNC)/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
+
+          set +x
+          echo "##vso[task.setvariable variable=MLFLOW_RUN_ID]$mlflow_run_id"
+
+          mkdir -p $(Pipeline.Workspace)/variables
+          echo "$mlflow_run_id" > $(Pipeline.Workspace)/variables/MLFLOW_RUN_ID
+      displayName: Download model
+    - template: build-container-template.yml
+      parameters:
+        sourceLocation: '$(Build.SourcesDirectory)/code/seldon'
+        dockerFile: '$(Build.SourcesDirectory)/code/seldon/Dockerfile'
+        containerReferences: '$(Build.SourcesDirectory)/code/seldon'
+        acr: $(ACR_NAME)
+        repository: 'mexicanfood/mlflowproject2'
+    - script: |
+        set -euxo pipefail
+        body=`curl $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$(MLFLOW_RUN_ID)%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output`
+        curl -d $body $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
+      displayName: "Promote model to Staging"
+    - task: HelmDeploy@0
+      displayName: Deploy to SeldonCore
+      inputs:
+        connectionType: 'Azure Resource Manager'
+        azureSubscription: $(AZURE_SUBSCRIPTION)
+        azureResourceGroup: $(K8S_RG)
+        kubernetesCluster: $(K8S_CLUSTER)
+        command: 'upgrade'
+        chartType: 'FilePath'
+        chartPath: '$(Build.SourcesDirectory)/code/seldon/chart'
+        releaseName: 'mexicanfood'
+        arguments: '--set=image.tag=$(build_push_mexicanfood_mlflowproject2.IMAGE_TAG)'
+    - publish: $(Pipeline.Workspace)/variables
+      artifact: variables
+      displayName: "Publish model variables"
+- stage: Deploy_to_Prod
+  displayName: "Deploy to Prod"
+  dependsOn: "Deploy_to_QA"
+  jobs:
+  - job:
+    displayName: "Deploy to AML"
+    steps:
+    - download: current
+      artifact: variables
+      displayName: "Download model variables"
+    - script: |
+        set -euxo pipefail
+        MLFLOW_RUN_ID=`cat $(Pipeline.Workspace)/variables/MLFLOW_RUN_ID`
+        body=`curl $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$MLFLOW_RUN_ID%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Production --compact-output`
+        curl -d $body $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
+      displayName: "Promote model to Production"
+    - task: AzureCLI@1
+      displayName: Run deploy script
+      inputs:
+        azureSubscription: $(AZURE_SUBSCRIPTION)
+        scriptLocation: inlineScript
+        inlineScript: |
+          cd '$(Build.SourcesDirectory)/code/deploy'
+
