@@ -1,3 +1,14 @@
+# One-time pre-requisite setup per subscription
+# https://docs.microsoft.com/en-us/azure/aks/cluster-configuration
+# https://docs.microsoft.com/en-us/azure/aks/spot-node-pool
+# az feature register --name UseCustomizedContainerRuntime --namespace Microsoft.ContainerService
+# az feature register --name Gen2VMPreview --namespace Microsoft.ContainerService
+# az feature register --name spotpoolpreview --namespace Microsoft.ContainerService
+# Will have to wait minutes for registration to complete then run this
+# az provider register --namespace Microsoft.ContainerService
+
+az extension add --name aks-preview
+
 az aks create -n $AKS_NAME -g $RESOURCE_GROUP -l $LOCATION \
   --kubernetes-version $K8S_VERSION \
   --node-count $NODE_COUNT \
@@ -10,5 +21,6 @@ az aks create -n $AKS_NAME -g $RESOURCE_GROUP -l $LOCATION \
   --node-vm-size $VM_SIZE \
   --enable-managed-identity \
   --network-plugin azure \
-  --generate-ssh-keys
-  
+  --generate-ssh-keys \
+  --node-resource-group kubeflowyo \
+  --aks-custom-headers usegen2vm=true,ContainerRuntime=containerd
