@@ -1,0 +1,104 @@
+ 
+apiVersion: machinelearning.seldon.io/v1alpha2
+kind: SeldonDeployment
+metadata:
+  name: pipeline
+spec:
+  name: pipeline-deployment
+  predictors:
+  - componentSpecs:
+    - spec:
+        containers:
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: router
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8080
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: model-a
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8081
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: model-b
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8082
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: model-c
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8083
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: model-d
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8084
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: combiner
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8085
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: input-transformer
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8086
+            name: http
+        - image: kubeflowyoacr.azurecr.io/seldon-pipeline:latest
+          name: output-transformer
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8087
+            name: http
+    graph:
+      name: output-transformer
+      type: OUTPUT_TRANSFORMER
+      endpoint:
+        type: REST
+      children:        
+        - name: input-transformer
+          type: TRANSFORMER
+          endpoint:
+            type: REST
+          children:
+            - name: router
+              type: ROUTER
+              endpoint:
+                type: REST
+              children:
+                - name: model-a
+                  endpoint:
+                    type: REST
+                  type: MODEL                
+                  children:
+                    - name: model-b
+                      endpoint:
+                        type: REST
+                      type: MODEL                
+                      children: []
+                - name: combiner
+                  endpoint:
+                    type: REST
+                  type: COMBINER                
+                  children:
+                    - name: model-c
+                      endpoint:
+                        type: REST
+                      type: MODEL                
+                      children: []
+                    - name: model-d
+                      endpoint:
+                        type: REST
+                      type: MODEL                
+                      children: []
+    name: pipeline-predictor
+    replicas: 1
+
+    
