@@ -143,6 +143,7 @@ stages:
             newPipelineName: '$(KF_NEW_PIPELINE_NAME)'
             existingPipelineName: '$(KF_EXISTING_PIPELINE_NAME)'
             versionName: '$(KF_NEW_VERSION_NAME)'
+            newPipelineDescription: "{'build_number':'$(Build.BuildNumber)','repo_name':'$(Build.Repository.Name)','branch_name':'$(Build.SourceBranchName)','queued_by':'$(Build.QueuedBy)'}"
         - task: KubeflowExperimentRun@0
           displayName: "Create Experiment with New Pipeline"
           inputs:
@@ -155,7 +156,7 @@ stages:
             experimentName: '$(KF_EXPERIMENT_NAME)'
             runName: '$(KF_RUN_NAME)'
             pipelineParams: '$(KF_PIPELINE_PARAMS)'
-            runDescription: '$(KF_RUN_DESCRIPTION)'
+            runDescription: "{'build_number':'$(Build.BuildNumber)','repo_name':'$(Build.Repository.Name)','branch_name':'$(Build.SourceBranchName)','queued_by':'$(Build.QueuedBy)'}"
             waitForRunToFinish: '$(KF_WAIT_TO_COMPLETE)'
             createNewRun: $(KF_CREATE_NEW_RUN)
           condition: 
@@ -209,4 +210,4 @@ stages:
             experimentID: '$(EXPERIMENT_ID)'
             runName: '$(KF_RUN_NAME)'
             pipelineParams: '$(KF_PIPELINE_PARAMS2)'
-            runDescription: '$(KF_RUN_DESCRIPTION)'
+            runDescription: "{'build_number':'$(Build.BuildNumber)','repo_name':'$(Build.Repository.Name)','branch_name':'$(Build.SourceBranchName)','queued_by':'$(Build.QueuedBy)'}"
