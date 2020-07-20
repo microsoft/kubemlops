@@ -9,6 +9,7 @@ parameters:
     type: string
   - name: containerReferences # space (' ') delimited set of files or folders in sourceLocation to check for changes
     type: string
+    default: '.'
   - name: acr # name of Azure Container Registry
     type: string
   - name: repository # name of container repository
@@ -54,3 +55,7 @@ steps:
         set +x
         echo "setting IMAGE_TAG output for task ${{ parameters.taskname }}"
         echo "##vso[task.setvariable variable=IMAGE_TAG;isOutput=true]$imageTag"
+
+        # write a file containing the image tag
+        mkdir -p $(Pipeline.Workspace)/image_tags
+        echo "$imageTag" > $(Pipeline.Workspace)/image_tags/${{ parameters.taskname }}

@@ -1,4 +1,5 @@
 "KubeFlow Pipeline with AzureDevops Callback"
+import os
 from kubernetes import client as k8s_client
 import kfp.dsl as dsl
 import kfp.compiler as compiler
@@ -78,7 +79,7 @@ def tacosandburritos_train(
 
     exit_op = dsl.ContainerOp(
         name='Exit Handler',
-        image=image_repo_name + '/azdocallback:latest',
+        image=image_repo_name + '/azdocallback:%s' % (os.getenv('AZDOCALLBACK_TAG') or 'latest'),  # noqa: E501
         command=['python'],
         arguments=[
             '/scripts/azdocallback.py',
@@ -95,7 +96,7 @@ def tacosandburritos_train(
 
         operations['mlflowproject'] = dsl.ContainerOp(
             name='Run MLflow Project on Azure Databricks',
-            image=image_repo_name + '/mlflowproject:latest',
+            image=image_repo_name + '/mlflowproject:%s' % (os.getenv('MLFLOWPROJECT_TAG') or 'latest'),  # noqa: E501
             command=['python'],
             arguments=[
                 '/scripts/run.py',
@@ -106,7 +107,7 @@ def tacosandburritos_train(
 
         # operations['preprocess'] = dsl.ContainerOp(
         #     name='preprocess',
-        #     image=image_repo_name + '/preprocess:latest',
+        #     image=image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest'),  # noqa: E501
         #     command=['python'],
         #     arguments=[
         #         '/scripts/data.py',
@@ -125,7 +126,7 @@ def tacosandburritos_train(
         # with dsl.ParallelFor([{'epochs': 1, 'lr': 0.0001}, {'epochs': 1, 'lr': 0.0002}]) as item:  # noqa: E501
         operations['training'] = dsl.ContainerOp(
             name="training",
-            image=image_repo_name + '/training:latest',
+            image=image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest'),  # noqa: E501
             command=['python'],
             arguments=[
                 '/scripts/train.py',
@@ -161,7 +162,7 @@ def tacosandburritos_train(
         # register kubeflow artifcats model
         operations['register to kubeflow'] = dsl.ContainerOp(
             name='register to kubeflow',
-            image=image_repo_name + '/registerartifacts:latest',
+            image=image_repo_name + '/registerartifacts:%s' % (os.getenv('REGISTERARTIFACTS_TAG') or 'latest'),  # noqa: E501
             command=['python'],
             arguments=[
                 '/scripts/registerartifacts.py',
@@ -178,7 +179,7 @@ def tacosandburritos_train(
         # register model
         operations['register to AML'] = dsl.ContainerOp(
             name='register to AML',
-            image=image_repo_name + '/register:latest',
+            image=image_repo_name + '/register:%s' % (os.getenv('REGISTER_TAG') or 'latest'),  # noqa: E501
             command=['python'],
             arguments=[
                 '/scripts/register.py',
@@ -199,7 +200,7 @@ def tacosandburritos_train(
         # register model to mlflow
         operations['register to mlflow'] = dsl.ContainerOp(
             name='register to mlflow',
-            image=image_repo_name + '/register-mlflow:latest',
+            image=image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest'),  # noqa: E501
             command=['python'],
             arguments=[
                 '/scripts/register.py',

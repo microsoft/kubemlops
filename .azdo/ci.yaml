@@ -35,82 +35,66 @@ stages:
       BUILD_ALL_IMAGES: true
     jobs:
       - job:
-        #condition: and(succeeded(), eq(variables['BUILD_ALL_IMAGES '], 'true'))
         steps:
-        - task: Docker@2
-          displayName: Build and Push MLFlow Project
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/mlflow-project/'
+            dockerFile: 'code/mlflow-project/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/mlflowproject'
-            command: 'buildAndPush'
-            Dockerfile: 'code/mlflow-project/Dockerfile'
-            buildContext: 'code/mlflow-project/'
-            tags: 'latest'
-        
-        # Disabling building all other images, uncomment to include specific component from code\pipelineazdo.py
-        - task: Docker@2
-          displayName: Build and Push AzdoCallback Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'mlflowproject_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/azdocallback/'
+            dockerFile: 'code/azdocallback/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/azdocallback'
-            command: 'buildAndPush'
-            Dockerfile: 'code/azdocallback/Dockerfile'
-            buildContext: 'code/azdocallback/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Preprocess Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'azdocallback_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/preprocess/'
+            dockerFile: 'code/preprocess/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/preprocess'
-            command: 'buildAndPush'
-            Dockerfile: 'code/preprocess/Dockerfile'
-            buildContext: 'code/preprocess/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Register Artifacts Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'preprocess_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/register-artifacts/'
+            dockerFile: 'code/register-artifacts/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/registerartifacts'
-            command: 'buildAndPush'
-            Dockerfile: 'code/register-artifacts/Dockerfile'
-            buildContext: 'code/register-artifacts/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Register MLFlow Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'registerartifacts_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/register-mlflow/'
+            dockerFile: 'code/register-mlflow/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/register-mlflow'
-            command: 'buildAndPush'
-            Dockerfile: 'code/register-mlflow/Dockerfile'
-            buildContext: 'code/register-mlflow/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Register Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'registermlflow_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/register/'
+            dockerFile: 'code/register/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/register'
-            command: 'buildAndPush'
-            Dockerfile: 'code/register/Dockerfile'
-            buildContext: 'code/register/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Training Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'register_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/training/'
+            dockerFile: 'code/training/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/training'
-            command: 'buildAndPush'
-            Dockerfile: 'code/training/Dockerfile'
-            buildContext: 'code/training/'
-            tags: 'latest'
-        - task: Docker@2
-          displayName: Build and Push Databricks Image
-          inputs:
-            containerRegistry: 'kubeflow-azdo-sample-acr-sc'
+            taskname: 'training_container'
+        - template: build-container-template.yml
+          parameters:
+            sourceLocation: 'code/databricks/'
+            dockerFile: 'code/databricks/Dockerfile'
+            acr: 'kubeflowyoacr'
             repository: 'mexicanfood/databricks-notebook'
-            command: 'buildAndPush'
-            Dockerfile: 'code/databricks/Dockerfile'
-            buildContext: 'code/databricks/'
-            tags: 'latest'
+            taskname: 'databricks_container'
+        - publish: $(Pipeline.Workspace)/image_tags
+          artifact: image_tags
+          displayName: "Publish image_tags"
 
   - stage: "Build_Upload_Run_Kubeflow_Pipeline"
     displayName: 'Build, Upload, and Run Kubeflow Pipeline'
@@ -119,6 +103,9 @@ stages:
     jobs:
       - job: "Upload_Pipeline"
         steps:
+        - download: current
+          artifact: image_tags
+          displayName: "Download image_tags"
         - task: UsePythonVersion@0
           inputs:
             versionSpec: '3.7'
@@ -133,8 +120,19 @@ stages:
           displayName: "Compile Pipeline"
           inputs:
             targetType: 'inline'
-            script: 'python code/pipelineazdo.py'
-       
+            script: |
+              if [ -d "$(Pipeline.Workspace)/image_tags" ]; then
+                export MLFLOWPROJECT_TAG=`cat $(Pipeline.Workspace)/image_tags/mlflowproject_container`
+                export AZDOCALLBACK_TAG=`cat $(Pipeline.Workspace)/image_tags/azdocallback_container`
+                export PREPROCESS_TAG=`cat $(Pipeline.Workspace)/image_tags/preprocess_container`
+                export REGISTERARTIFACTS_TAG=`cat $(Pipeline.Workspace)/image_tags/registerartifacts_container`
+                export REGISTERMLFLOW_TAG=`cat $(Pipeline.Workspace)/image_tags/registermlflow_container`
+                export REGISTER_TAG=`cat $(Pipeline.Workspace)/image_tags/register_container`
+                export TRAINING_TAG=`cat $(Pipeline.Workspace)/image_tags/training_container`
+                export DATABRICKS_TAG=`cat $(Pipeline.Workspace)/image_tags/databricks_container`
+              fi
+
+              python code/pipelineazdo.py
         - task: KubeflowUploadPipeline@0
           displayName: "Upload Pipeline to KubeFlow" 
           inputs:
