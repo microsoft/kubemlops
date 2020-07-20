@@ -44,7 +44,7 @@ stages:
              curl -L https://istio.io/downloadIstio | ISTIO_VERSION=$ISTIO_VERSION sh -
              cd istio-$ISTIO_VERSION
              export PATH=$PWD/bin:$PATH
-             istioctl manifest apply  --set profile=default
+             istioctl install  --set profile=default
       - task: Bash@3
         name: "Install_KFP"
         displayName: "Install Kubeflow Pipelines"

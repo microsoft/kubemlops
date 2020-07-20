@@ -1,0 +1,25 @@
+data:
+  config: |
+    {
+    namespace: kubeflow,
+    executorImage: gcr.io/ml-pipeline/argoexec:v2.7.5-license-compliance,
+    containerRuntimeExecutor: pns,
+    artifactRepository:
+    {
+        s3: {
+            bucket: mlpipeline,
+            keyPrefix: artifacts,
+            endpoint: minio-service.kubeflow:9000,
+            insecure: true,
+            accessKeySecret: {
+                name: mlpipeline-minio-artifact,
+                key: accesskey
+            },
+            secretKeySecret: {
+                name: mlpipeline-minio-artifact,
+                key: secretkey
+            }
+        },
+        archiveLogs: true
+    }
+    }

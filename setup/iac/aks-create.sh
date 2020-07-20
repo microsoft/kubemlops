@@ -22,5 +22,7 @@ az aks create -n $AKS_NAME -g $RESOURCE_GROUP -l $LOCATION \
   --enable-managed-identity \
   --network-plugin azure \
   --generate-ssh-keys \
-  --node-resource-group kubeflowyo \
+  --service-principal $AKS_SERVICE_PRICIPAL \
+  --client-secret $AKS_SERVICE_PRINCIPAL_SECRET \
+  --node-resource-group $RESOURCE_GROUP-nodepool \
   --aks-custom-headers usegen2vm=true,ContainerRuntime=containerd
