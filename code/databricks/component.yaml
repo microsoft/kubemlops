@@ -1,0 +1,13 @@
+name: Processing on Databricks
+inputs:
+- {name: run_id, type: String}
+- {name: notebook_params, type: String}
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/databricks-notebook:latest'
+    command: [
+      "bash", "/scripts/run_notebook.sh",
+      '--r', {inputValue: run_id},
+      '--p', {inputValue: notebook_params}
+    ]

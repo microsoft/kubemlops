@@ -1,0 +1,13 @@
+name: Run MLflow Project on Azure Databricks
+inputs:
+- {name: mlflow_experiment_id, type: String}
+- {name: kf_run_id, type: String}
+
+implementation:
+  container:
+    image: ''
+    command: [
+      "python", "/scripts/run.py",
+      '--experiement_id', {inputValue: mlflow_experiment_id},
+      '--kf_run_id', {inputValue: kf_run_id}
+    ]

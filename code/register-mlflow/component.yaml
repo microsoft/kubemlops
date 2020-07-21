@@ -1,0 +1,17 @@
+name: Register to MLFlow 
+inputs:
+- {name: model, type: String}
+- {name: model_name, type: String}
+- {name: experiment_name, type: String}
+- {name: run_id, type: String}
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/register-mlflow:latest'
+    command: [
+      "python", "/scripts/register.py",
+      '--model', {inputValue: model},
+      '--model_name', {inputValue: model_name},
+      '--experiment_name', {inputValue: experiment_name},
+      '--run_id', {inputValue: run_id}
+    ]

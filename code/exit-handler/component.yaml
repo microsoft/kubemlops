@@ -1,0 +1,13 @@
+name: Exit Handler 
+
+inputs:
+- {name: callback_url, type: String}
+- {name: callback_payload, type: String}
+
+
+implementation:
+  container:
+    image: 'curlimages/curl'
+    command: [
+      "curl", "-d", {inputValue: callback_payload}, {inputValue: callback_url}
+    ]

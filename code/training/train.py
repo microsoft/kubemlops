@@ -76,7 +76,8 @@ def run(
         batch_size=32,
         learning_rate=0.0001,
         output='model',
-        dset=None):
+        dset=None,
+        metrics_file='/mlpipeline-metrics.json'):
 
     global g_image_size
     g_image_size = img_size
@@ -148,7 +149,7 @@ def run(
 
     # Pipeline Metric
     info('Writing Pipeline Metric')
-    with file_io.FileIO('/mlpipeline-metrics.json', 'w') as f:
+    with file_io.FileIO(metrics_file, 'w') as f:
         json.dump(metrics, f)
 
     # save model
@@ -201,7 +202,10 @@ if __name__ == "__main__":
                         default=0.0001, type=float)
     parser.add_argument('-o', '--outputs',
                         help='output directory', default='model')
-    parser.add_argument('-f', '--dataset', help='cleaned data listing')
+    parser.add_argument('-f', '--dataset', help='input dataset')
+    parser.add_argument('-m', '--model', help='output model info')
+    parser.add_argument('-u', '--ui_metadata', help='ui metadata')
+    parser.add_argument('-me', '--metrics', help='model metrics')
     args = parser.parse_args()
 
     info('Using TensorFlow v.{}'.format(tf.__version__))
@@ -212,6 +216,15 @@ if __name__ == "__main__":
     dataset = Path(args.base_path).joinpath(args.dataset)
     image_size = args.image_size
 
+    output_model_file = Path(args.model).resolve(strict=False)
+    Path(output_model_file).parent.mkdir(parents=True, exist_ok=True)
+
+    ui_metadata_file = Path(args.ui_metadata).resolve(strict=False)
+    Path(ui_metadata_file).parent.mkdir(parents=True, exist_ok=True)
+
+    metrics_file = Path(args.metrics).resolve(strict=False)
+    Path(metrics_file).parent.mkdir(parents=True, exist_ok=True)
+
     params = Path(args.base_path).joinpath('params.json')
 
     args = {
@@ -221,7 +234,8 @@ if __name__ == "__main__":
         "batch_size": args.batch,
         "learning_rate": args.lr,
         "output": str(target_path),
-        "dset": str(dataset)
+        "dset": str(dataset),
+        "metrics_file": str(metrics_file)
     }
 
     dataset_signature = generate_hash(dataset, 'kf_pipeline')
@@ -257,7 +271,13 @@ if __name__ == "__main__":
         }]
     }
 
-    with open('/mlpipeline-ui-metadata.json', 'w') as f:
+    # Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(str(ui_metadata_file), 'w') as f:
         json.dump(metadata, f)
 
-    # python train.py -d train -e 3 -b 32 -l 0.0001 -o model -f train.txt
+    model_output_content = []
+    for filename in target_path.iterdir():
+        model_output_content.append(str(filename))
+
+    with open(str(output_model_file), 'w+') as f:
+        f.write('\n'.join(model_output_content))

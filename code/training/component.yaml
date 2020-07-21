@@ -1,0 +1,35 @@
+name: Training 
+inputs:
+- {name: base_path, type: String}
+- {name: training_folder, type: String}
+- {name: epochs, type: Integer}
+- {name: batch, type: Integer}
+- {name: image_size, type: Integer}
+- {name: lr, type: Float}
+- {name: model_folder, type: Float}
+- {name: images, type: String}
+- {name: dataset, type: kubeflow.org/alpha/data_set, default: None}
+
+outputs:
+- {name: model, type: kubeflow.org/alpha/model}
+- {name: mlpipeline-ui-metadata, type: String}
+- {name: mlpipeline-metrics, type: String}
+
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/training:latest'
+    command: [
+      "python", "/scripts/train.py",
+      '--base_path', {inputValue: base_path},
+      '--data', {inputValue: training_folder},
+      '--epochs', {inputValue: epochs},
+      '--batch', {inputValue: batch},
+      '--image_size', {inputValue: image_size},
+      '--lr', {inputValue: lr},
+      '--outputs', {inputValue: model_folder},
+      '--dataset', {inputPath: dataset},
+      '--model', {outputPath: model},
+      '--ui_metadata', {outputPath: mlpipeline-ui-metadata},
+      '--metrics', {outputPath: mlpipeline-metrics}
+    ]

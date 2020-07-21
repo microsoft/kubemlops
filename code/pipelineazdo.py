@@ -1,60 +1,56 @@
-"KubeFlow Pipeline with AzureDevops Callback"
+# flake8: noqa E501
+# "KubeFlow Pipeline with AzureDevops Callback"
 import os
 from kubernetes import client as k8s_client
 import kfp.dsl as dsl
 import kfp.compiler as compiler
-# import kfp.components as comp
+import kfp.components as components
 from kfp.azure import use_azure_secret
 from kubernetes.client.models import V1EnvVar
+from utils.kfp_helper import use_databricks_secret, use_image
+
+
+persistent_volume_path = '/mnt/azure'
+batch = 32
+model_name = 'tacosandburritos'
+operations = {}
+image_size = 160
+training_folder = 'train'
+training_dataset = 'train.txt'
+model_folder = 'model'
+image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
+mlflow_url = 'http://mlflow:5000'
+kfp_host_url = 'http://52.149.63.253/pipeline'
+
+component_root = os.path.join(os.path.dirname(
+    os.path.abspath(__file__)), ".")
+image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
+
+mlflow_project_op = components.load_component_from_file(os.path.join(component_root, 'mlflow-project/component.yaml'))  # noqa: E501
+mlflow_project_image_name = image_repo_name + '/mlflowproject:%s' % (os.getenv('MLFLOWPROJECT_TAG') or 'latest')  # noqa: E501
+
+train_op = components.load_component_from_file(os.path.join(component_root, 'training/component.yaml'))  # noqa: E501
+train_image_name = image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest')  # noqa: E501
+
+evaluate_op = components.load_component_from_file(os.path.join(component_root, 'evaluate/component.yaml'))  # noqa: E501
+
+register_op = components.load_component_from_file(os.path.join(component_root, 'register/component.yaml'))  # noqa: E501
+register_images_name = image_repo_name + '/register:%s' % (os.getenv('REGISTER_TAG') or 'latest')  # noqa: E501
+
+register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'register-mlflow/component.yaml'))  # noqa: E501
+register_mlflow_image_name = image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest')  # noqa: E501
+
+exit_op = components.load_component_from_file(os.path.join(component_root, 'azdocallback/component.yaml'))  # noqa: E501
+exit_image_name = image_repo_name + '/azdocallback:%s' % (os.getenv('AZDOCALLBACK_TAG') or 'latest')  # noqa: E501
+
+preprocess_op = components.load_component_from_file(os.path.join(component_root, 'preprocess/component.yaml'))  # noqa: E501
+preprocess_image_name = image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest')  # noqa: E501
 
 
 @dsl.pipeline(
     name='Tacos vs. Burritos',
     description='Simple TF CNN'
 )
-def use_databricks_secret(secret_name='databricks-secret'):
-    def _use_databricks_secret(task):
-        from kubernetes import client as k8s_client
-        (
-            task.container
-                .add_env_variable(
-                    k8s_client.V1EnvVar(
-                        name='DATABRICKS_HOST',
-                        value_from=k8s_client.V1EnvVarSource(
-                            secret_key_ref=k8s_client.V1SecretKeySelector(
-                                name=secret_name,
-                                key='DATABRICKS_HOST'
-                            )
-                        )
-                    )
-                )
-                .add_env_variable(  # noqa: E131
-                    k8s_client.V1EnvVar(
-                        name='DATABRICKS_TOKEN',
-                        value_from=k8s_client.V1EnvVarSource(
-                            secret_key_ref=k8s_client.V1SecretKeySelector(
-                                name=secret_name,
-                                key='DATABRICKS_TOKEN'
-                            )
-                        )
-                    )
-                )
-                .add_env_variable(  # noqa: E131
-                    k8s_client.V1EnvVar(
-                        name='CLUSTER_ID',
-                        value_from=k8s_client.V1EnvVarSource(
-                            secret_key_ref=k8s_client.V1SecretKeySelector(
-                                name=secret_name,
-                                key='CLUSTER_ID'
-                            )
-                        )
-                    )
-                )
-        )
-        return task
-    return _use_databricks_secret
-
-
 def tacosandburritos_train(
     resource_group,
     workspace,
@@ -62,175 +58,71 @@ def tacosandburritos_train(
     mlflow_experiment_id,
     azdocallbackinfo=None
 ):
-    """Pipeline steps"""
 
-    persistent_volume_path = '/mnt/azure'
-    data_download = dataset  # noqa: E501,F841
-    batch = 32
-    model_name = 'tacosandburritos'
-    operations = {}
-    image_size = 160
-    training_folder = 'train'
-    training_dataset = 'train.txt'
-    model_folder = 'model'
-    image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
-    mlflow_url = 'http://mlflow:5000'
-    kfp_host_url = 'http://52.149.63.253/pipeline'
+    exit_handler_op = exit_op(kfp_host_url=kfp_host_url,
+                              azdocallbackinfo=azdocallbackinfo,
+                              run_id=dsl.RUN_ID_PLACEHOLDER,
+                              tenant_id="$(AZ_TENANT_ID)",
+                              service_principal_id="$(AZ_CLIENT_ID)",
+                              service_principal_password="$(AZ_CLIENT_SECRET)").apply(use_azure_secret()).apply(use_image(exit_image_name))  # noqa: E501
 
-    exit_op = dsl.ContainerOp(
-        name='Exit Handler',
-        image=image_repo_name + '/azdocallback:%s' % (os.getenv('AZDOCALLBACK_TAG') or 'latest'),  # noqa: E501
-        command=['python'],
-        arguments=[
-            '/scripts/azdocallback.py',
-            '--kfp_host_url', kfp_host_url,
-            '--azdocallback', azdocallbackinfo,
-            '--run_id', dsl.RUN_ID_PLACEHOLDER,
-            '--tenant_id', "$(AZ_TENANT_ID)",
-            '--service_principal_id', "$(AZ_CLIENT_ID)",
-            '--service_principal_password', "$(AZ_CLIENT_SECRET)",
-        ]
-    ).apply(use_azure_secret())
+    with dsl.ExitHandler(exit_op=exit_handler_op):
 
-    with dsl.ExitHandler(exit_op=exit_op):
+        operations['mlflowproject'] = mlflow_project_op(mlflow_experiment_id=mlflow_experiment_id,  # noqa: E501
+                                                        kf_run_id=dsl.RUN_ID_PLACEHOLDER).apply(use_databricks_secret()).apply(use_image(mlflow_project_image_name))  # noqa: E501
 
-        operations['mlflowproject'] = dsl.ContainerOp(
-            name='Run MLflow Project on Azure Databricks',
-            image=image_repo_name + '/mlflowproject:%s' % (os.getenv('MLFLOWPROJECT_TAG') or 'latest'),  # noqa: E501
-            command=['python'],
-            arguments=[
-                '/scripts/run.py',
-                '--experiement_id', mlflow_experiment_id,
-                '--kf_run_id', dsl.RUN_ID_PLACEHOLDER
-            ]
-        ).apply(use_databricks_secret())
+        operations['preprocess'] = preprocess_op(base_path=persistent_volume_path,  # noqa: E501
+                                                 training_folder=training_folder,  # noqa: E501
+                                                 target=training_dataset,
+                                                 image_size=image_size,
+                                                 zipfile=dataset).apply(use_image(preprocess_image_name))  # noqa: E501
 
-        # operations['preprocess'] = dsl.ContainerOp(
-        #     name='preprocess',
-        #     image=image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest'),  # noqa: E501
-        #     command=['python'],
-        #     arguments=[
-        #         '/scripts/data.py',
-        #         '--base_path', persistent_volume_path,
-        #         '--data', training_folder,
-        #         '--target', training_dataset,
-        #         '--img_size', image_size,
-        #         '--zipfile', data_download
-        #     ]
-        # )
+        operations['preprocess'].after(operations['mlflowproject'])  # noqa: E501
 
-        # operations['preprocess'].after(operations['data processing on databricks'])  # noqa: E501
+        operations['training'] = train_op(base_path=persistent_volume_path,
+                                          training_folder=training_folder,
+                                          epochs=2,
+                                          batch=batch,
+                                          image_size=image_size,
+                                          lr=0.0001,
+                                          model_folder=model_folder,
+                                          images=training_dataset,
+                                          dataset=operations['preprocess'].outputs['dataset']). \
+                                          set_memory_request('16G'). \
+                                          add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)). \
+                                          add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
+                                          add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \
+                                          apply(use_image(train_image_name))
 
-        #  train
-        #  TODO: read set of parameters from config file
-        # with dsl.ParallelFor([{'epochs': 1, 'lr': 0.0001}, {'epochs': 1, 'lr': 0.0002}]) as item:  # noqa: E501
-        operations['training'] = dsl.ContainerOp(
-            name="training",
-            image=image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest'),  # noqa: E501
-            command=['python'],
-            arguments=[
-                '/scripts/train.py',
-                '--base_path', persistent_volume_path,
-                '--data', training_folder,
-                '--epochs', 2,
-                '--batch', batch,
-                '--image_size', image_size,
-                '--lr', 0.0001,
-                '--outputs', model_folder,
-                '--dataset', training_dataset
-            ],
-            output_artifact_paths={    # change output_artifact_paths to file_outputs after this PR is merged https://github.com/kubeflow/pipelines/pull/2334 # noqa: E501
-                'mlpipeline-metrics': '/mlpipeline-metrics.json',
-                'mlpipeline-ui-metadata': '/mlpipeline-ui-metadata.json'
-            }
-            ).add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)).add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet'))  # noqa: E501
+        operations['training'].after(operations['preprocess'])
 
-        operations['training'].after(operations['mlflowproject'])
+        operations['evaluate'] = evaluate_op(model=operations['training'].outputs['model'])
+        operations['evaluate'].after(operations['training'])        
 
-        operations['evaluate'] = dsl.ContainerOp(
-            name='evaluate',
-            image="busybox",
-            command=['sh', '-c'],
-            arguments=[
-                'echo',
-                'Life is Good!'
-            ]
+        operations['register to AML'] = register_op(base_path=persistent_volume_path,
+                                          model_file='latest.h5',
+                                          model_name=model_name,
+                                          tenant_id='$(AZ_TENANT_ID)',
+                                          service_principal_id='$(AZ_CLIENT_ID)',
+                                          service_principal_password='$(AZ_CLIENT_SECRET)',
+                                          subscription_id='$(AZ_SUBSCRIPTION_ID)',
+                                          resource_group=resource_group,
+                                          workspace=workspace,
+                                          run_id=dsl.RUN_ID_PLACEHOLDER). \
+                                          apply(use_azure_secret()). \
+                                          apply(use_image(register_images_name))
 
-        )
-        operations['evaluate'].after(operations['training'])
-
-        # register kubeflow artifcats model
-        # operations['register to kubeflow'] = dsl.ContainerOp(
-        #     name='register to kubeflow',
-        #     image=image_repo_name + '/registerartifacts:%s' % (os.getenv('REGISTERARTIFACTS_TAG') or 'latest'),  # noqa: E501
-        #     command=['python'],
-        #     arguments=[
-        #         '/scripts/registerartifacts.py',
-        #         '--base_path', persistent_volume_path,
-        #         '--model', 'latest.h5',
-        #         '--model_name', model_name,
-        #         '--data', training_folder,
-        #         '--dataset', training_dataset,
-        #         '--run_id', dsl.RUN_ID_PLACEHOLDER
-        #     ]
-        # ).apply(use_azure_secret())
-        # operations['register to kubeflow'].after(operations['evaluate'])
-
-        # register model
-        operations['register to AML'] = dsl.ContainerOp(
-            name='register to AML',
-            image=image_repo_name + '/register:%s' % (os.getenv('REGISTER_TAG') or 'latest'),  # noqa: E501
-            command=['python'],
-            arguments=[
-                '/scripts/register.py',
-                '--base_path', persistent_volume_path,
-                '--model', 'latest.h5',
-                '--model_name', model_name,
-                '--tenant_id', "$(AZ_TENANT_ID)",
-                '--service_principal_id', "$(AZ_CLIENT_ID)",
-                '--service_principal_password', "$(AZ_CLIENT_SECRET)",
-                '--subscription_id', "$(AZ_SUBSCRIPTION_ID)",
-                '--resource_group', resource_group,
-                '--workspace', workspace,
-                '--run_id', dsl.RUN_ID_PLACEHOLDER
-            ]
-        ).apply(use_azure_secret())
         operations['register to AML'].after(operations['evaluate'])
 
-        # register model to mlflow
-        operations['register to mlflow'] = dsl.ContainerOp(
-            name='register to mlflow',
-            image=image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest'),  # noqa: E501
-            command=['python'],
-            arguments=[
-                '/scripts/register.py',
-                '--model', 'model',
-                '--model_name', model_name,
-                '--experiment_name', 'mexicanfood',
-                '--run_id', dsl.RUN_ID_PLACEHOLDER
-            ]
-        ).apply(use_azure_secret()).add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url))  # noqa: E501
-        operations['register to mlflow'].after(operations['register to AML'])
+        operations['register to mlflow'] = register_mlflow_op(model='model',
+                                                              model_name=model_name,
+                                                              experiment_name='mexicanfood',
+                                                              run_id=dsl.RUN_ID_PLACEHOLDER). \
+                                                              apply(use_azure_secret()). \
+                                                              add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
+                                                              apply(use_image(register_mlflow_image_name))
 
-    # operations['deploy'] = dsl.ContainerOp(
-    #     name='deploy',
-    #     image=image_repo_name + '/deploy:latest',
-    #     command=['sh'],
-    #     arguments=[
-    #         '/scripts/deploy.sh',
-    #         '-n', model_name,
-    #         '-m', model_name,
-    #         '-t', "$(AZ_TENANT_ID)",
-    #         '-r', resource_group,
-    #         '-w', workspace,
-    #         '-s', "$(AZ_CLIENT_ID)",
-    #         '-p', "$(AZ_CLIENT_SECRET)",
-    #         '-u', "$(AZ_SUBSCRIPTION_ID)",
-    #         '-b', persistent_volume_path,
-    #         '-x', dsl.RUN_ID_PLACEHOLDER
-    #     ]
-    # ).apply(use_azure_secret())
-    # operations['deploy'].after(operations['register'])
+        operations['register to mlflow'].after(operations['register to AML'])
 
     for _, op_1 in operations.items():
         op_1.container.set_image_pull_policy("Always")

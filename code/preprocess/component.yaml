@@ -1,0 +1,23 @@
+name: Data Preprocessing 
+inputs:
+- {name: base_path, type: String}
+- {name: training_folder, type: String}
+- {name: target, type: String, default: 'train.txt'}
+- {name: image_size, type: Integer}
+- {name: zipfile, type: String}
+
+outputs:
+- {name: dataset, type: kubeflow.org/alpha/data_set}
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/preprocess:latest'
+    command: [
+      "python", "/scripts/data.py",
+      '--base_path', {inputValue: base_path},
+      '--data', {inputValue: training_folder},
+      '--target', {inputValue: target},
+      '--img_size', {inputValue: image_size},
+      '--zipfile', {inputValue: zipfile},
+      '--output_dataset', {outputPath: dataset}
+    ]

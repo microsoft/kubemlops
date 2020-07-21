@@ -93,6 +93,7 @@ if __name__ == "__main__":
         '-z', '--zipfile', help='source data zip file', default='../../tacodata.zip')  # noqa: E501
     parser.add_argument('-f', '--force',
                         help='force clear all data', default=False, action='store_true')  # noqa: E501
+    parser.add_argument('-o', '--output_dataset')  # noqa: E501
     args = parser.parse_args()
     print(args)
 
@@ -110,13 +111,18 @@ if __name__ == "__main__":
     download('https://aiadvocate.blob.core.windows.net/public/tacodata.zip',
              str(base_path), args.force)
 
+    print('Testing images...')
+    images = walk_images(str(data_path), args.img_size)
+
     if os.path.exists(str(target_path)):
         print('dataset text file already exists, skipping check')
     else:
-        print('Testing images...')
-        images = walk_images(str(data_path), args.img_size)
-
         # save file
         print('writing dataset to {}'.format(target_path))
         with open(str(target_path), 'w+') as f:
             f.write('\n'.join(images))
+
+    output_path = Path(args.output_dataset).resolve(strict=False)
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    with open(str(output_path), 'w+') as f:
+        f.write('\n'.join(images))

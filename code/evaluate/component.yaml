@@ -1,0 +1,13 @@
+name: Evaluate Model 
+inputs:
+- {name: model, type: kubeflow.org/alpha/model}
+
+outputs:
+- {name: result, type: String}
+
+implementation:
+  container:
+    image: 'busybox'
+    command: [
+      "sh", "-c", 'echo $1 && mkdir -p /tmp/outputs/result && sleep 5s && echo $0 > $1', {inputPath: model}, {outputPath: result}
+    ]
