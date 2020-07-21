@@ -75,7 +75,7 @@ def tacosandburritos_train(
     model_folder = 'model'
     image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
     mlflow_url = 'http://mlflow:5000'
-    kfp_host_url = 'http://51.143.118.153/pipeline'
+    kfp_host_url = 'http://52.149.63.253/pipeline'
 
     exit_op = dsl.ContainerOp(
         name='Exit Handler',
@@ -160,21 +160,21 @@ def tacosandburritos_train(
         operations['evaluate'].after(operations['training'])
 
         # register kubeflow artifcats model
-        operations['register to kubeflow'] = dsl.ContainerOp(
-            name='register to kubeflow',
-            image=image_repo_name + '/registerartifacts:%s' % (os.getenv('REGISTERARTIFACTS_TAG') or 'latest'),  # noqa: E501
-            command=['python'],
-            arguments=[
-                '/scripts/registerartifacts.py',
-                '--base_path', persistent_volume_path,
-                '--model', 'latest.h5',
-                '--model_name', model_name,
-                '--data', training_folder,
-                '--dataset', training_dataset,
-                '--run_id', dsl.RUN_ID_PLACEHOLDER
-            ]
-        ).apply(use_azure_secret())
-        operations['register to kubeflow'].after(operations['evaluate'])
+        # operations['register to kubeflow'] = dsl.ContainerOp(
+        #     name='register to kubeflow',
+        #     image=image_repo_name + '/registerartifacts:%s' % (os.getenv('REGISTERARTIFACTS_TAG') or 'latest'),  # noqa: E501
+        #     command=['python'],
+        #     arguments=[
+        #         '/scripts/registerartifacts.py',
+        #         '--base_path', persistent_volume_path,
+        #         '--model', 'latest.h5',
+        #         '--model_name', model_name,
+        #         '--data', training_folder,
+        #         '--dataset', training_dataset,
+        #         '--run_id', dsl.RUN_ID_PLACEHOLDER
+        #     ]
+        # ).apply(use_azure_secret())
+        # operations['register to kubeflow'].after(operations['evaluate'])
 
         # register model
         operations['register to AML'] = dsl.ContainerOp(
@@ -195,7 +195,7 @@ def tacosandburritos_train(
                 '--run_id', dsl.RUN_ID_PLACEHOLDER
             ]
         ).apply(use_azure_secret())
-        operations['register to AML'].after(operations['register to kubeflow'])
+        operations['register to AML'].after(operations['evaluate'])
 
         # register model to mlflow
         operations['register to mlflow'] = dsl.ContainerOp(
