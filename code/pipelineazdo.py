@@ -7,7 +7,7 @@ import kfp.compiler as compiler
 import kfp.components as components
 from kfp.azure import use_azure_secret
 from kubernetes.client.models import V1EnvVar
-from utils.kfp_helper import use_databricks_secret, use_image
+from utils.kfp_helper import use_databricks_secret, use_image, use_kfp_host_secret
 
 
 persistent_volume_path = '/mnt/azure'
@@ -20,7 +20,6 @@ training_dataset = 'train.txt'
 model_folder = 'model'
 image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
 mlflow_url = 'http://mlflow:5000'
-kfp_host_url = 'http://52.149.63.253/pipeline'
 
 component_root = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), ".")
@@ -59,12 +58,12 @@ def tacosandburritos_train(
     azdocallbackinfo=None
 ):
 
-    exit_handler_op = exit_op(kfp_host_url=kfp_host_url,
+    exit_handler_op = exit_op(kfp_host_url="$(KFP_HOST)",
                               azdocallbackinfo=azdocallbackinfo,
                               run_id=dsl.RUN_ID_PLACEHOLDER,
                               tenant_id="$(AZ_TENANT_ID)",
                               service_principal_id="$(AZ_CLIENT_ID)",
-                              service_principal_password="$(AZ_CLIENT_SECRET)").apply(use_azure_secret()).apply(use_image(exit_image_name))  # noqa: E501
+                              service_principal_password="$(AZ_CLIENT_SECRET)").apply(use_azure_secret()).apply(use_kfp_host_secret()).apply(use_image(exit_image_name))  # noqa: E501
 
     with dsl.ExitHandler(exit_op=exit_handler_op):
 
@@ -88,29 +87,30 @@ def tacosandburritos_train(
                                           model_folder=model_folder,
                                           images=training_dataset,
                                           dataset=operations['preprocess'].outputs['dataset']). \
-                                          set_memory_request('16G'). \
-                                          add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)). \
-                                          add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
-                                          add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \
-                                          apply(use_image(train_image_name))
+            set_memory_request('16G'). \
+            add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)). \
+            add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
+            add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \
+            apply(use_image(train_image_name))
 
         operations['training'].after(operations['preprocess'])
 
-        operations['evaluate'] = evaluate_op(model=operations['training'].outputs['model'])
-        operations['evaluate'].after(operations['training'])        
+        operations['evaluate'] = evaluate_op(
+            model=operations['training'].outputs['model'])
+        operations['evaluate'].after(operations['training'])
 
         operations['register to AML'] = register_op(base_path=persistent_volume_path,
-                                          model_file='latest.h5',
-                                          model_name=model_name,
-                                          tenant_id='$(AZ_TENANT_ID)',
-                                          service_principal_id='$(AZ_CLIENT_ID)',
-                                          service_principal_password='$(AZ_CLIENT_SECRET)',
-                                          subscription_id='$(AZ_SUBSCRIPTION_ID)',
-                                          resource_group=resource_group,
-                                          workspace=workspace,
-                                          run_id=dsl.RUN_ID_PLACEHOLDER). \
-                                          apply(use_azure_secret()). \
-                                          apply(use_image(register_images_name))
+                                                    model_file='latest.h5',
+                                                    model_name=model_name,
+                                                    tenant_id='$(AZ_TENANT_ID)',
+                                                    service_principal_id='$(AZ_CLIENT_ID)',
+                                                    service_principal_password='$(AZ_CLIENT_SECRET)',
+                                                    subscription_id='$(AZ_SUBSCRIPTION_ID)',
+                                                    resource_group=resource_group,
+                                                    workspace=workspace,
+                                                    run_id=dsl.RUN_ID_PLACEHOLDER). \
+            apply(use_azure_secret()). \
+            apply(use_image(register_images_name))
 
         operations['register to AML'].after(operations['evaluate'])
 
@@ -118,9 +118,9 @@ def tacosandburritos_train(
                                                               model_name=model_name,
                                                               experiment_name='mexicanfood',
                                                               run_id=dsl.RUN_ID_PLACEHOLDER). \
-                                                              apply(use_azure_secret()). \
-                                                              add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
-                                                              apply(use_image(register_mlflow_image_name))
+            apply(use_azure_secret()). \
+            add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
+            apply(use_image(register_mlflow_image_name))
 
         operations['register to mlflow'].after(operations['register to AML'])
 

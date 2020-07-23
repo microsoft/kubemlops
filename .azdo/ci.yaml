@@ -133,11 +133,20 @@ stages:
               fi
 
               python code/pipelineazdo.py
+        - task: Bash@3
+          name: "kfpauth"
+          displayName: "Authenticate KFP"
+          inputs:
+            targetType: 'inline'
+            script: |
+              pip3 install adal --upgrade
+              # Avoid returning token from python script directly to avoid it getting exposed over stdoutput      
+              echo "##vso[task.setvariable variable=KFP_API_TOKEN;issecret=true;isOutput=true]$(python code/utils/get_kfp_auth_token.py --tenant $(KF_TENANT_ID) --service_principal $(KF_CLIENT_ID) --sp_secret $(KF_CLIENT_SECRET) 2>&1 >/dev/null)"               
         - task: KubeflowUploadPipeline@0
           displayName: "Upload Pipeline to KubeFlow" 
           inputs:
             kubeflowEndpoint: '$(KF_ENDPOINT)'
-            bearerToken: '$(KF_API_TOKEN)'
+            bearerToken: '$(kfpauth.KFP_API_TOKEN)'
             kubeflowPipelineTask: '$(KF_UPLOAD_CHOICE)'
             pipelineFilePath: '$(KF_PIPELINE_FILE)'
             newPipelineName: '$(KF_NEW_PIPELINE_NAME)'
@@ -148,7 +157,7 @@ stages:
           displayName: "Create Experiment with New Pipeline"
           inputs:
             kubeflowEndpoint: '$(KF_ENDPOINT)'
-            bearerToken: '$(KF_API_TOKEN)'
+            bearerToken: '$(kfpauth.KFP_API_TOKEN)'
             pipeline: '$(KF_NEW_PIPELINE_NAME)'
             useDefaultVersion: '$(KF_USE_DEFAULT_VERSION)'
             pipelineVersion: '$(KF_NEW_PIPELINE_NAME)'
@@ -166,7 +175,7 @@ stages:
           displayName: "Create Experiment with New Pipeline Version"
           inputs:
             kubeflowEndpoint: '$(KF_ENDPOINT)'
-            bearerToken: '$(KF_API_TOKEN)'
+            bearerToken: '$(kfpauth.KFP_API_TOKEN)'
             pipeline: '$(KF_EXISTING_PIPELINE_NAME)'
             useDefaultVersion: $(KF_USE_DEFAULT_VERSION)
             pipelineVersion: '$(KF_NEW_VERSION_NAME)'
@@ -199,15 +208,18 @@ stages:
         pool: server
         variables:
           PIPELINE_VERSION_ID: $[ dependencies.Upload_Pipeline.outputs['setpipelinevars.KFPIPELINEVERSIONID'] ]
-          EXPERIMENT_ID: $[ dependencies.Upload_Pipeline.outputs['setpipelinevars.KPEXPID'] ]
+          EXPERIMENT_ID: $[ dependencies.Upload_Pipeline.outputs['setpipelinevars.KPEXPID'] ]          
+          KFP_API_TOKEN: $[ dependencies.Upload_Pipeline.outputs['kfpauth.KFP_API_TOKEN'] ]          
         steps:
         - task: private-kfexperimentrun-async@0
           displayName: "Invoke Pipeline"
           inputs:
             kubeflowEndpoint: '$(KF_ENDPOINT)'
-            bearerToken: '$(KF_API_TOKEN)'
+            bearerToken: '$(KFP_API_TOKEN)'
             pipelineVersionID: '$(PIPELINE_VERSION_ID)'
             experimentID: '$(EXPERIMENT_ID)'
             runName: '$(KF_RUN_NAME)'
             pipelineParams: '$(KF_PIPELINE_PARAMS2)'
             runDescription: "{'build_number':'$(Build.BuildNumber)','repo_name':'$(Build.Repository.Name)','branch_name':'$(Build.SourceBranchName)','queued_by':'$(Build.QueuedBy)'}"
+
+

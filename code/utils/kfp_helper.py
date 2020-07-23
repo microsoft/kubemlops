@@ -41,6 +41,27 @@ def use_databricks_secret(secret_name='databricks-secret'):
     return _use_databricks_secret
 
 
+def use_kfp_host_secret(secret_name='kfp-host-secret'):
+    def _use_kfp_host_secret(task):
+        from kubernetes import client as k8s_client
+        (
+            task.container
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name='KFP_HOST',
+                        value_from=k8s_client.V1EnvVarSource(
+                            secret_key_ref=k8s_client.V1SecretKeySelector(
+                                name=secret_name,
+                                key='KFP_HOST'
+                            )
+                        )
+                    )
+                )
+        )
+        return task
+    return _use_kfp_host_secret
+
+
 def use_image(image_name):
     def _use_image(task):
         task.image = image_name
