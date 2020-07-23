@@ -45,6 +45,7 @@ exit_image_name = image_repo_name + '/azdocallback:%s' % (os.getenv('AZDOCALLBAC
 preprocess_op = components.load_component_from_file(os.path.join(component_root, 'preprocess/component.yaml'))  # noqa: E501
 preprocess_image_name = image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest')  # noqa: E501
 
+appinsights_connection_str = os.getenv('APPLICATIONINSIGHTS_CONNECTION_STRING')
 
 @dsl.pipeline(
     name='Tacos vs. Burritos',
@@ -96,6 +97,8 @@ def tacosandburritos_train(
             add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)). \
             add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
             add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \
+            add_env_variable(V1EnvVar(name="APPLICATIONINSIGHTS_CONNECTION_STRING",
+                value=appinsights_connection_str)). \
             apply(use_image(train_image_name))
 
         operations['training'].after(operations['preprocess'])

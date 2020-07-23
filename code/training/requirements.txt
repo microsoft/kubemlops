@@ -2,3 +2,6 @@ Pillow
 pathlib2
 pandas
 mlflow
+
+# Logging dependencies
+opencensus-ext-azure

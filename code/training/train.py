@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 import os
+import sys
 import math
 import hmac
 import json
@@ -16,11 +17,106 @@ import mlflow
 import mlflow.tensorflow
 
 
-def info(msg, char="#", width=75):
-    print("")
-    print(char * width)
-    print(char + "   %0*s" % ((-1 * width) + 5, msg) + char)
-    print(char * width)
+# Logging
+# TODO:
+# - Default custom dimensions with mlflow/kfp data via hooks
+# - OpenCensus trace/span example
+# - Function:line info to stdout/stderr (already logged to Azure)
+# - Config file
+# - Refactor to plug in to serving
+# - Should we wrap an already customized unhandled exp handler?
+# - Structured TF/non-TF azure log levels
+# - Use OpenCensus logger integration?
+# - Mock tests
+# - Doc'ified comments
+# - Duplicate stderr fix
+# - Trace/span uuid for run, ordering
+# - Remove noise from Azure Monitor
+# - Add run start/end time to init/cooldown
+import logging
+from opencensus.ext.azure.log_exporter import AzureLogHandler
+
+# Custom exception handler to override the system exception hook.
+# Note this is for last resort, unhandled exceptions only. It should not be
+# used as a general exception handler.
+# https://docs.python.org/3/library/sys.html#sys.excepthook
+
+
+def exception_handler(type, value, traceback):
+    # Restore the original handler in case our code triggers more exceptions.
+    # It may not be our fault, e.g. not enough stack space, OOM.
+    sys.excepthook = sys.__excepthook__
+
+    # Allow some special exception types through.
+    if issubclass(type, KeyboardInterrupt):
+        return
+
+    logger = logging.getLogger()
+    logger.exception(msg='Unhandled exception', exc_info=(type, value, traceback))  # noqa: E501
+
+
+def install_exception_handler():
+    # Python provides the original exception handler as sys.__excepthook__,
+    # However it's possible that something else already overwrote it.
+    if sys.excepthook != sys.__excepthook__:
+        # Sanity check to see if it is our hook.
+        if sys.excepthook == exception_handler:
+            raise Exception('Duplicate exception handler - did you already install it?')  # noqa: E501
+        # else:
+        #    raise Exception('Other exception handler already installed')
+
+    # Overwrite the hook
+    sys.excepthook = exception_handler
+
+    print('Exception hook installed')
+
+
+def init_logging():
+    print('Initializing logging...')
+    logger = logging.getLogger()  # Get root logger.
+    logger.setLevel(logging.DEBUG)
+
+    console_formatter = logging.Formatter('%(asctime)s: %(levelname)s - %(message)s')   # noqa: E501
+
+    stderr_handler = logging.StreamHandler(sys.stderr)
+    stderr_handler.setLevel(logging.ERROR)
+    stderr_handler.setFormatter(console_formatter)
+    logger.addHandler(stderr_handler)
+
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setFormatter(console_formatter)
+    logger.addHandler(stdout_handler)
+
+    azure_monitor_key = os.environ.get('APPLICATIONINSIGHTS_CONNECTION_STRING')
+    if azure_monitor_key:
+        print('AppInsights logging enabled')
+        azure_log_handler = AzureLogHandler()  # Implicit key from env
+        azure_log_handler.setLevel(logging.INFO)
+        logger.addHandler(azure_log_handler)
+
+        # Also dump TF to Azure
+        tf.get_logger().addHandler(azure_log_handler)
+    else:
+        logger.warning('No AppInsights key found - local logging only')
+
+    print('Logging initialized')
+
+    return logger
+
+
+logger = init_logging()
+install_exception_handler()
+
+
+# def info(msg, char="#", width=75):
+#     print("")
+#     print(char * width)
+#     print(char + "   %0*s" % ((-1 * width) + 5, msg) + char)
+#     print(char * width)
+
+
+# End of logging test
 
 
 def check_dir(path):
@@ -45,23 +141,23 @@ def load_dataset(base_path, dset, split=None):
     # find labels - parent folder names
     labels = {}
     for (_, dirs, _) in os.walk(base_path):
-        print('found {}'.format(dirs))
+        logger.info('found {}'.format(dirs))
         labels = {k: v for (v, k) in enumerate(dirs)}
-        print('using {}'.format(labels))
+        logger.info('using {}'.format(labels))
         break
 
     # load all files along with idx label
-    print('loading dataset from {}'.format(dset))
+    logger.info('loading dataset from {}'.format(dset))
     with open(dset, 'r') as d:
         data = [(str(Path(line.strip()).absolute()),
                  labels[Path(line.strip()).parent.name]) for line in d.readlines()]  # noqa: E501
 
-    print('dataset size: {}\nsuffling data...'.format(len(data)))
+    logger.info('dataset size: {}\nsuffling data...'.format(len(data)))
 
     # shuffle data
     shuffle(data)
 
-    print('splitting data...')
+    logger.info('splitting data...')
     # split data
     train_idx = int(len(data) * splits[0])
 
@@ -83,7 +179,7 @@ def run(
     g_image_size = img_size
     img_shape = (img_size, img_size, 3)
 
-    info('Loading Data Set')
+    logger.info('Loading Data Set')
     # load dataset
     train = load_dataset(dpath, dset)
 
@@ -93,7 +189,7 @@ def run(
                             Dataset.from_tensor_slices(list(train_labels)),
                             Dataset.from_tensor_slices([img_size]*len(train_data))))  # noqa: E501
 
-    print(train_ds)
+    logger.info(train_ds)
     train_ds = train_ds.map(map_func=process_image,
                             num_parallel_calls=5)
 
@@ -104,7 +200,7 @@ def run(
     train_ds = train_ds.repeat()
 
     # model
-    info('Creating Model')
+    logger.info('Creating Model')
     base_model = tf.keras.applications.MobileNetV2(input_shape=img_shape,
                                                    include_top=False,
                                                    weights='imagenet')
@@ -123,7 +219,7 @@ def run(
     model.summary()
 
     # training
-    info('Training')
+    logger.info('Training')
     steps_per_epoch = math.ceil(len(train) / batch_size)
     mlflow.tensorflow.autolog()
     model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
@@ -133,10 +229,10 @@ def run(
     # accuracy = model.evaluate()
     accuracy = random()  # dummy score
     metric = {
-            'name': 'accuracy-score',
-            'numberValue':  accuracy,
-            'format': "PERCENTAGE",
-        }
+        'name': 'accuracy-score',
+        'numberValue':  accuracy,
+        'format': "PERCENTAGE",
+    }
     metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
         'metrics': [metric]}
 
@@ -148,23 +244,23 @@ def run(
     mlflow.log_metrics({"accuracy": accuracy})
 
     # Pipeline Metric
-    info('Writing Pipeline Metric')
+    logger.info('Writing Pipeline Metric')
     with file_io.FileIO(metrics_file, 'w') as f:
         json.dump(metrics, f)
 
     # save model
-    info('Saving Model')
+    logger.info('Saving Model')
 
     # check existence of base model folder
     output = check_dir(output)
 
-    print('Serializing into saved_model format')
+    logger.info('Serializing into saved_model format')
     tf.saved_model.save(model, str(output))
-    print('Done!')
+    logger.info('Done!')
 
     # add time prefix folder
     file_output = str(Path(output).joinpath('latest.h5'))
-    print('Serializing h5 model to:\n{}'.format(file_output))
+    logger.info('Serializing h5 model to:\n{}'.format(file_output))
     model.save(file_output)
     # mlflow.log_artifact(file_output)
 
@@ -172,7 +268,7 @@ def run(
 
 
 def generate_hash(dfile, key):
-    print('Generating hash for {}'.format(dfile))
+    logger.info('Generating hash for {}'.format(dfile))
     m = hmac.new(str.encode(key), digestmod=hashlib.sha256)
     BUF_SIZE = 65536
     with open(str(dfile), 'rb') as myfile:
@@ -208,7 +304,7 @@ if __name__ == "__main__":
     parser.add_argument('-me', '--metrics', help='model metrics')
     args = parser.parse_args()
 
-    info('Using TensorFlow v.{}'.format(tf.__version__))
+    logger.info('Using TensorFlow v.{}'.format(tf.__version__))
 
     data_path = Path(args.base_path).joinpath(args.data).resolve(strict=False)
     target_path = Path(args.base_path).resolve(
@@ -241,11 +337,11 @@ if __name__ == "__main__":
     dataset_signature = generate_hash(dataset, 'kf_pipeline')
     # printing out args for posterity
     for i in args:
-        print('{} => {}'.format(i, args[i]))
+        logger.info('{} => {}'.format(i, args[i]))
 
     # Log to mlflow
     mlflow.set_experiment("mexicanfood")
-    mlflow.set_tag("external_run_id", os.getenv("RUN_ID"))
+    mlflow.set_tag("external_run_id", os.environ.get("RUN_ID"))
 
     model_signature = run(**args)
 
@@ -253,13 +349,13 @@ if __name__ == "__main__":
     args['model_signature'] = model_signature.upper()
     args['model_type'] = 'tfv2-MobileNetV2'
     #  mlflow.log_params(args)
-    print('Writing out params...', end='')
+    logger.info('Writing out params...')
     with open(str(params), 'w') as f:
         json.dump(args, f)
 
-    print(' Saved to {}'.format(str(params)))
+    logger.info('Saved to {}'.format(str(params)))
 
-    info('Log Traning Parameters')
+    logger.info('Log Traning Parameters')
     parmeters = pd.read_json(str(params), typ='series')
     metadata = {
         'outputs': [{
@@ -271,7 +367,7 @@ if __name__ == "__main__":
         }]
     }
 
-    # Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    # Path(output_path).parent.`mkdir(parents=True, exist_ok=True)
     with open(str(ui_metadata_file), 'w') as f:
         json.dump(metadata, f)
 

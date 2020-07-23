@@ -132,6 +132,8 @@ stages:
                 export DATABRICKS_TAG=`cat $(Pipeline.Workspace)/image_tags/databricks_container`
               fi
 
+              export APPLICATIONINSIGHTS_CONNECTION_STRING=$(APPLICATIONINSIGHTS_CONNECTION_STRING)
+
               python code/pipelineazdo.py
         - task: Bash@3
           name: "kfpauth"
