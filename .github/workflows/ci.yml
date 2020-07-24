@@ -109,7 +109,7 @@ jobs:
           # The folder in the Github repo that holds the source
           folder: code/register-artifacts
 
-      - name: Build AML Register Image
+      - name: Build AML Register Model Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
         uses: ams0/acr-task-github-action@v1
         with:
@@ -126,9 +126,9 @@ jobs:
           branch: ${{ needs.code_quality_checks.outputs.event_sha }}
           tag: latest
           # Docker image name
-          image: register
+          image: aml-register-model
           # The folder in the Github repo that holds the source
-          folder: code/register
+          folder: code/aml-register-model
 
       - name: Build MLFlow Register Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')

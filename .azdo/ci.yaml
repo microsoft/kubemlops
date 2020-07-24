@@ -73,11 +73,11 @@ stages:
             taskname: 'registermlflow_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/register/'
-            dockerFile: 'code/register/Dockerfile'
+            sourceLocation: 'code/aml-register-model/'
+            dockerFile: 'code/aml-register-model/Dockerfile'
             acr: 'kubeflowyoacr'
-            repository: 'mexicanfood/register'
-            taskname: 'register_container'
+            repository: 'mexicanfood/aml-register-model'
+            taskname: 'aml_register_model_container'
         - template: build-container-template.yml
           parameters:
             sourceLocation: 'code/training/'
@@ -127,7 +127,7 @@ stages:
                 export PREPROCESS_TAG=`cat $(Pipeline.Workspace)/image_tags/preprocess_container`
                 export REGISTERARTIFACTS_TAG=`cat $(Pipeline.Workspace)/image_tags/registerartifacts_container`
                 export REGISTERMLFLOW_TAG=`cat $(Pipeline.Workspace)/image_tags/registermlflow_container`
-                export REGISTER_TAG=`cat $(Pipeline.Workspace)/image_tags/register_container`
+                export AML_REGISTER_MODEL_TAG=`cat $(Pipeline.Workspace)/image_tags/aml-register-model_container`
                 export TRAINING_TAG=`cat $(Pipeline.Workspace)/image_tags/training_container`
                 export DATABRICKS_TAG=`cat $(Pipeline.Workspace)/image_tags/databricks_container`
               fi

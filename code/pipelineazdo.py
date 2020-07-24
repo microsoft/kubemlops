@@ -33,8 +33,8 @@ train_image_name = image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG')
 
 evaluate_op = components.load_component_from_file(os.path.join(component_root, 'evaluate/component.yaml'))  # noqa: E501
 
-register_op = components.load_component_from_file(os.path.join(component_root, 'register/component.yaml'))  # noqa: E501
-register_images_name = image_repo_name + '/register:%s' % (os.getenv('REGISTER_TAG') or 'latest')  # noqa: E501
+register_op = components.load_component_from_file(os.path.join(component_root, 'aml-register-model/component.yaml'))  # noqa: E501
+register_images_name = image_repo_name + '/aml-register-model:%s' % (os.getenv('AML_REGISTER_MODEL_TAG') or 'latest')  # noqa: E501
 
 register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'register-mlflow/component.yaml'))  # noqa: E501
 register_mlflow_image_name = image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest')  # noqa: E501

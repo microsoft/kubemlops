@@ -13,7 +13,7 @@ inputs:
 
 implementation:
   container:
-    image: 'kubeflowyoacr.azurecr.io/mexicanfood/register:latest'
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/aml-register-model:latest'
     command: [
       "python", "/scripts/register.py",
       '--base_path', {inputValue: base_path},

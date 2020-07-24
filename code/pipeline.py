@@ -25,7 +25,7 @@ def get_callback_payload(event_type):
     return json.dumps(payload)
 
 
-def get_start_callback_container(): 
+def get_start_callback_container():
     return dsl.UserContainer('callback',
                              'curlimages/curl',
                              command=['curl'],
@@ -58,8 +58,8 @@ train_op = components.load_component_from_file(os.path.join(component_root, 'tra
 train_image_name = image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest')  # noqa: E501
 
 evaluate_op = components.load_component_from_file(os.path.join(component_root, 'evaluate/component.yaml'))  # noqa: E501
-register_op = components.load_component_from_file(os.path.join(component_root, 'register/component.yaml'))  # noqa: E501
-register_images_name = image_repo_name + '/register:%s' % (os.getenv('REGISTER_TAG') or 'latest')  # noqa: E501
+register_op = components.load_component_from_file(os.path.join(component_root, 'aml-register-model/component.yaml'))  # noqa: E501
+register_images_name = image_repo_name + '/aml-register-model:%s' % (os.getenv('AML_REGISTER_MODEL_TAG') or 'latest')  # noqa: E501
 
 register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'register-mlflow/component.yaml'))  # noqa: E501
 register_mlflow_image_name = image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest')  # noqa: E501
@@ -72,7 +72,6 @@ exit_op = components.load_component_from_file(os.path.join(component_root, 'exit
     name='Tacos vs. Burritos',
     description='Simple TF CNN'
 )
-
 def tacosandburritos_train(
     resource_group,
     workspace,
@@ -85,17 +84,19 @@ def tacosandburritos_train(
     with dsl.ExitHandler(exit_handler):
 
         operations['data processing on databricks'] = databricks_op(run_id=dsl.RUN_ID_PLACEHOLDER,  # noqa: E501
-                                                 notebook_params='{"argument_one":"param one","argument_two":"param two"}' # noqa: E501
+                                                 notebook_params='{"argument_one":"param one","argument_two":"param two"}'  # noqa: E501
                                                  ).apply(use_databricks_secret()). \
                                                  add_init_container(get_start_callback_container()). \
-                                                 apply(use_image(databricks_image_name))
+                                                 apply(
+                                                     use_image(databricks_image_name))
 
         operations['preprocess'] = preprocess_op(base_path=persistent_volume_path,  # noqa: E501
                                                  training_folder=training_folder,  # noqa: E501
                                                  target=training_dataset,
                                                  image_size=image_size,
                                                  zipfile=dataset). \
-                                                 apply(use_image(preprocess_image_name))
+                                                 apply(
+                                                     use_image(preprocess_image_name))
 
         operations['preprocess'].after(operations['data processing on databricks'])  # noqa: E501
 
@@ -115,9 +116,9 @@ def tacosandburritos_train(
 
         operations['training'].after(operations['preprocess'])
 
-        operations['evaluate'] = evaluate_op(model=operations['training'].outputs['model'])
-        operations['evaluate'].after(operations['training'])        
-
+        operations['evaluate'] = evaluate_op(
+            model=operations['training'].outputs['model'])
+        operations['evaluate'].after(operations['training'])
 
         operations['register to AML'] = register_op(base_path=persistent_volume_path,
                                           model_file='latest.h5',
@@ -143,8 +144,6 @@ def tacosandburritos_train(
         operations['finalize'] = finalize_op(callback_url=callback_url,
                                              callback_payload=get_callback_payload("Model is registered"))
         operations['finalize'].after(operations['register to mlflow'])
-
-
 
     for _, op_1 in operations.items():
         op_1.container.set_image_pull_policy("Always")
