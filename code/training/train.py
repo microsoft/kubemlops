@@ -21,7 +21,6 @@ import mlflow.tensorflow
 # TODO:
 # - Default custom dimensions with mlflow/kfp data via hooks
 # - OpenCensus trace/span example
-# - Function:line info to stdout/stderr (already logged to Azure)
 # - Config file
 # - Refactor to plug in to serving
 # - Should we wrap an already customized unhandled exp handler?
@@ -35,6 +34,12 @@ import mlflow.tensorflow
 # - Add run start/end time to init/cooldown
 import logging
 from opencensus.ext.azure.log_exporter import AzureLogHandler
+from opencensus.ext.azure.trace_exporter import AzureExporter
+from opencensus.trace import config_integration
+from opencensus.trace.samplers import ProbabilitySampler
+from opencensus.trace.tracer import Tracer
+
+config_integration.trace_integrations(['logging'])
 
 # Custom exception handler to override the system exception hook.
 # Note this is for last resort, unhandled exceptions only. It should not be
@@ -76,7 +81,7 @@ def init_logging():
     logger = logging.getLogger()  # Get root logger.
     logger.setLevel(logging.DEBUG)
 
-    console_formatter = logging.Formatter('%(asctime)s: %(levelname)s - %(message)s')   # noqa: E501
+    console_formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(filename)s:%(lineno)s - %(message)s')   # noqa: E501
 
     stderr_handler = logging.StreamHandler(sys.stderr)
     stderr_handler.setLevel(logging.ERROR)
@@ -105,15 +110,39 @@ def init_logging():
     return logger
 
 
+def init_tracer():
+    tracer = Tracer(
+        exporter=AzureExporter(),  # Implicit key from env
+        sampler=ProbabilitySampler(1.0)  # Always log, reduce to sample
+    )
+    print('Tracer initialized')
+    return tracer
+
+
 logger = init_logging()
 install_exception_handler()
+tracer = init_tracer()
+
+# Only periodically update the MLFlow run data as necessary to avoid
+# introducing significant overhead.
+# TODO(tcare): Use MLFlow hooks?
 
 
-# def info(msg, char="#", width=75):
-#     print("")
-#     print(char * width)
-#     print(char + "   %0*s" % ((-1 * width) + 5, msg) + char)
-#     print(char * width)
+def populate_mlflow_run_data():
+    client = mlflow.tracking.MlflowClient()
+    active_run = mlflow.active_run()
+    if not active_run:
+        logger.warning('No MLFlow run data')
+        return None
+    run_id = active_run.info.run_id
+    data = client.get_run(run_id).data
+    logger.info(data)  # REVIEW: Remove
+    return data
+
+
+# We'll be adding more to the run data as we progress towards training.
+# For now, add the bare minimum in case we error out.
+mlflow_run_data = populate_mlflow_run_data()
 
 
 # End of logging test
@@ -181,90 +210,96 @@ def run(
 
     logger.info('Loading Data Set')
     # load dataset
-    train = load_dataset(dpath, dset)
+    with tracer.span(name='Dataset Init'):
+        train = load_dataset(dpath, dset)
 
-    # training data
-    train_data, train_labels = zip(*train)
-    train_ds = Dataset.zip((Dataset.from_tensor_slices(list(train_data)),
-                            Dataset.from_tensor_slices(list(train_labels)),
-                            Dataset.from_tensor_slices([img_size]*len(train_data))))  # noqa: E501
+        # training data
+        train_data, train_labels = zip(*train)
+        train_ds = Dataset.zip((Dataset.from_tensor_slices(list(train_data)),
+                                Dataset.from_tensor_slices(list(train_labels)),
+                                Dataset.from_tensor_slices([img_size]*len(train_data))))  # noqa: E501
 
-    logger.info(train_ds)
-    train_ds = train_ds.map(map_func=process_image,
-                            num_parallel_calls=5)
+        logger.info(train_ds)
+        train_ds = train_ds.map(map_func=process_image,
+                                num_parallel_calls=5)
 
-    train_ds = train_ds.apply(tf.data.experimental.ignore_errors())
+        train_ds = train_ds.apply(tf.data.experimental.ignore_errors())
 
-    train_ds = train_ds.batch(batch_size)
-    train_ds = train_ds.prefetch(buffer_size=5)
-    train_ds = train_ds.repeat()
+        train_ds = train_ds.batch(batch_size)
+        train_ds = train_ds.prefetch(buffer_size=5)
+        train_ds = train_ds.repeat()
 
     # model
     logger.info('Creating Model')
-    base_model = tf.keras.applications.MobileNetV2(input_shape=img_shape,
-                                                   include_top=False,
-                                                   weights='imagenet')
-    base_model.trainable = True
+    with tracer.span(name='Model Creation'):
+        base_model = tf.keras.applications.MobileNetV2(input_shape=img_shape,
+                                                       include_top=False,
+                                                       weights='imagenet')
+        base_model.trainable = True
 
-    model = tf.keras.Sequential([
-        base_model,
-        tf.keras.layers.GlobalAveragePooling2D(),
-        tf.keras.layers.Dense(1, activation='sigmoid')
-    ])
+        model = tf.keras.Sequential([
+            base_model,
+            tf.keras.layers.GlobalAveragePooling2D(),
+            tf.keras.layers.Dense(1, activation='sigmoid')
+        ])
 
-    model.compile(optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
-                  loss='binary_crossentropy',
-                  metrics=['accuracy'])
+        model.compile(optimizer=tf.keras.optimizers.Adam(lr=learning_rate),
+                      loss='binary_crossentropy',
+                      metrics=['accuracy'])
 
-    model.summary()
+        model.summary()
 
     # training
     logger.info('Training')
-    steps_per_epoch = math.ceil(len(train) / batch_size)
-    mlflow.tensorflow.autolog()
-    model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
+    with tracer.span(name='Model Training'):
+        steps_per_epoch = math.ceil(len(train) / batch_size)
+        mlflow.tensorflow.autolog()
+        mlflow_run_data = populate_mlflow_run_data()
+        model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
 
-    # Log metric
-    # TODO calculate metric from based on evalution data.
-    # accuracy = model.evaluate()
-    accuracy = random()  # dummy score
-    metric = {
-        'name': 'accuracy-score',
-        'numberValue':  accuracy,
-        'format': "PERCENTAGE",
-    }
-    metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
-        'metrics': [metric]}
+    with tracer.span(name='Post Training'):
+        # Log metric
+        # TODO calculate metric from based on evalution data.
+        # accuracy = model.evaluate()
+        accuracy = random()  # dummy score
+        metric = {
+            'name': 'accuracy-score',
+            'numberValue':  accuracy,
+            'format': "PERCENTAGE",
+        }
+        metrics = {                          # [doc] https://www.kubeflow.org/docs/pipelines/sdk/pipelines-metrics/  # noqa: E501
+            'metrics': [metric]}
 
-    # TODO
-    # It would be nice to refactor all this infra code below like logging, saving files,  # noqa: E501
-    # out of this method so it just does the training and returns the model along with metrics  # noqa: E501
+        # TODO
+        # It would be nice to refactor all this infra code below like logging, saving files,  # noqa: E501
+        # out of this method so it just does the training and returns the model along with metrics  # noqa: E501
 
-    # Log to mlflow
-    mlflow.log_metrics({"accuracy": accuracy})
+        # Log to mlflow
+        mlflow.log_metrics({"accuracy": accuracy})
 
-    # Pipeline Metric
-    logger.info('Writing Pipeline Metric')
-    with file_io.FileIO(metrics_file, 'w') as f:
-        json.dump(metrics, f)
+        # Pipeline Metric
+        logger.info('Writing Pipeline Metric')
+        with file_io.FileIO(metrics_file, 'w') as f:
+            json.dump(metrics, f)
 
     # save model
     logger.info('Saving Model')
+    with tracer.span(name='Model Saving'):
 
-    # check existence of base model folder
-    output = check_dir(output)
+        # check existence of base model folder
+        output = check_dir(output)
 
-    logger.info('Serializing into saved_model format')
-    tf.saved_model.save(model, str(output))
-    logger.info('Done!')
+        logger.info('Serializing into saved_model format')
+        tf.saved_model.save(model, str(output))
+        logger.info('Done!')
 
-    # add time prefix folder
-    file_output = str(Path(output).joinpath('latest.h5'))
-    logger.info('Serializing h5 model to:\n{}'.format(file_output))
-    model.save(file_output)
-    # mlflow.log_artifact(file_output)
+        # add time prefix folder
+        file_output = str(Path(output).joinpath('latest.h5'))
+        logger.info('Serializing h5 model to:\n{}'.format(file_output))
+        model.save(file_output)
+        # mlflow.log_artifact(file_output)
 
-    return generate_hash(file_output, 'kf_pipeline')
+        return generate_hash(file_output, 'kf_pipeline')
 
 
 def generate_hash(dfile, key):
@@ -342,6 +377,8 @@ if __name__ == "__main__":
     # Log to mlflow
     mlflow.set_experiment("mexicanfood")
     mlflow.set_tag("external_run_id", os.environ.get("RUN_ID"))
+
+    mlflow_run_data = populate_mlflow_run_data()
 
     model_signature = run(**args)
 
