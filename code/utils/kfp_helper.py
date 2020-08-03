@@ -67,3 +67,29 @@ def use_image(image_name):
         task.image = image_name
         return task
     return _use_image
+
+def use_keyvault_secret_provider(volume_name='secrets-store-inline', secret_provider_class='azure-kvname', secret_volume_mount_path='/app/secrets'):
+    def _use_keyvault_secret_provider(task):
+        from kubernetes import client as k8s_client
+        task = task.add_volume(
+            k8s_client.V1Volume(
+                name=volume_name,
+                csi=k8s_client.V1CSIVolumeSource(
+                    driver="secrets-store.csi.k8s.io",
+                    read_only=True,
+                    volume_attributes={
+                        "secretProviderClass" : secret_provider_class
+                        }
+                    node_publish_secret_ref=k8s_client.V1LocalObjectReference(
+                        name="secrets-store-creds"
+                        )
+                )
+            )
+        ).add_volume_mount(
+                k8s_client.V1VolumeMount(
+                    name=volume_name,
+                    mount_path=secret_volume_mount_path
+                )
+            )
+        return task
+    return _use_keyvault_secret_provider

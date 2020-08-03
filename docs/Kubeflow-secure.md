@@ -10,3 +10,6 @@
   * Deploy a PVC configuration in kubeflow namespace
 * Run [attach-acr.sh](../setup/kfp/attach-acr.sh). Initialize variables in the script before running it.
   * Use Az CLI to authenticate Azure Container Registry with AKS
+* Run [azure-csi.sh](../setup/kfp/azure-csi.sh).
+  * Allows you to access secrets from Keyvault in the pods.
+  * Initialize variables in the script and [azsecretprovider.yaml](../setup/kfp/azsecretprovider.yaml) before running it.
