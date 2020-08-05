@@ -38,6 +38,7 @@ from opencensus.ext.azure.trace_exporter import AzureExporter
 from opencensus.trace import config_integration
 from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.tracer import Tracer
+import inspect
 
 config_integration.trace_integrations(['logging'])
 
@@ -46,18 +47,28 @@ config_integration.trace_integrations(['logging'])
 # used as a general exception handler.
 # https://docs.python.org/3/library/sys.html#sys.excepthook
 
+exception_handler_save = sys.excepthook
+
 
 def exception_handler(type, value, traceback):
     # Restore the original handler in case our code triggers more exceptions.
     # It may not be our fault, e.g. not enough stack space, OOM.
-    sys.excepthook = sys.__excepthook__
+    sys.excepthook = exception_handler_save
 
     # Allow some special exception types through.
     if issubclass(type, KeyboardInterrupt):
         return
 
     logger = logging.getLogger()
+    if mlflow_run_data:
+        logger.error(json.dumps(mlflow_run_data))
+    else:
+        logger.warning("Exception handler: No mlflow run data found")
+
     logger.exception(msg='Unhandled exception', exc_info=(type, value, traceback))  # noqa: E501
+
+    # Pass through to original handler
+    return sys.excepthook(type, value, traceback)
 
 
 def install_exception_handler():
@@ -67,7 +78,11 @@ def install_exception_handler():
         # Sanity check to see if it is our hook.
         if sys.excepthook == exception_handler:
             raise Exception('Duplicate exception handler - did you already install it?')  # noqa: E501
-        # else:
+        # TODO(tcare): Looks like this can be false if the OS (e.g. Ubuntu)
+        # overrides the handler. Can we tell if it's a system handler
+        # that doesn't originate from python?
+        else:
+            logger.warning('External exception handler installed - ' + str(inspect.getsourcefile(sys.excepthook)))  # noqa: E501
         #    raise Exception('Other exception handler already installed')
 
     # Overwrite the hook
@@ -81,17 +96,17 @@ def init_logging():
     logger = logging.getLogger()  # Get root logger.
     logger.setLevel(logging.DEBUG)
 
-    console_formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(filename)s:%(lineno)s - %(message)s')   # noqa: E501
+    # console_formatter = logging.Formatter('%(asctime)s: %(levelname)s: %(filename)s:%(lineno)s - %(message)s')   # noqa: E501
 
-    stderr_handler = logging.StreamHandler(sys.stderr)
-    stderr_handler.setLevel(logging.ERROR)
-    stderr_handler.setFormatter(console_formatter)
-    logger.addHandler(stderr_handler)
+    # stderr_handler = logging.StreamHandler(sys.stderr)
+    # stderr_handler.setLevel(logging.ERROR)
+    # stderr_handler.setFormatter(console_formatter)
+    # logger.addHandler(stderr_handler)
 
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.INFO)
-    stdout_handler.setFormatter(console_formatter)
-    logger.addHandler(stdout_handler)
+    # stdout_handler = logging.StreamHandler(sys.stdout)
+    # stdout_handler.setLevel(logging.INFO)
+    # stdout_handler.setFormatter(console_formatter)
+    # logger.addHandler(stdout_handler)
 
     azure_monitor_key = os.environ.get('APPLICATIONINSIGHTS_CONNECTION_STRING')
     if azure_monitor_key:
@@ -254,7 +269,7 @@ def run(
     with tracer.span(name='Model Training'):
         steps_per_epoch = math.ceil(len(train) / batch_size)
         mlflow.tensorflow.autolog()
-        mlflow_run_data = populate_mlflow_run_data()
+        mlflow_run_data = populate_mlflow_run_data()  # noqa: F841
         model.fit(train_ds, epochs=epochs, steps_per_epoch=steps_per_epoch)
 
     with tracer.span(name='Post Training'):
@@ -333,10 +348,13 @@ if __name__ == "__main__":
                         default=0.0001, type=float)
     parser.add_argument('-o', '--outputs',
                         help='output directory', default='model')
-    parser.add_argument('-f', '--dataset', help='input dataset')
-    parser.add_argument('-m', '--model', help='output model info')
-    parser.add_argument('-u', '--ui_metadata', help='ui metadata')
-    parser.add_argument('-me', '--metrics', help='model metrics')
+    parser.add_argument('-f', '--dataset', help='input dataset', required=True)
+    parser.add_argument(
+        '-m', '--model', help='output model info', required=True)
+    parser.add_argument('-u', '--ui_metadata',
+                        help='ui metadata', required=True)
+    parser.add_argument('-me', '--metrics',
+                        help='model metrics', required=True)
     args = parser.parse_args()
 
     logger.info('Using TensorFlow v.{}'.format(tf.__version__))
