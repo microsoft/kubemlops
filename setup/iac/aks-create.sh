@@ -24,5 +24,5 @@ az aks create -n $AKS_NAME -g $RESOURCE_GROUP -l $LOCATION \
   --generate-ssh-keys \
   --service-principal $AKS_SERVICE_PRICIPAL \
   --client-secret $AKS_SERVICE_PRINCIPAL_SECRET \
-  --node-resource-group $RESOURCE_GROUP-nodepool \
+  --node-resource-group $AKS_NAME-nodepool \
   --aks-custom-headers usegen2vm=true,ContainerRuntime=containerd
