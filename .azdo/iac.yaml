@@ -20,6 +20,9 @@ stages:
           scriptLocation: 'scriptPath'
           scriptPath: 'setup/iac/aks-create.sh'
           displayName: Create AKS instance
+        env:
+          AKS_SERVICE_PRINCIPAL_SECRET: '$(AKS_SERVICE_PRINCIPAL_SECRET)'
+
 
 - stage: "Install_K8s_applications"
   displayName: "Install_K8s_applications"
