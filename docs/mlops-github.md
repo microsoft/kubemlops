@@ -32,14 +32,14 @@ Clicking on `Actions` tab at the top, `CI` on the left side, your pull request, 
 
 ### Access KFP via Kubeflow Central Dashboard
 
-1. Go to http://{KUBEFLOW_HOST}/_/pipeline/
+1. Go to http://{KUBEFLOW_HOST}/_/pipelines/
 2. Clicking on the pipeline with the matching RUN_ID, you will get details on failed and finished steps.
 and the job, you will get details on failed, finished, and skipped steps.
-![Kubeflow Dashboard Pipeline Steps](./diagrams/kubeflow-dashboard.png)
+![Kubeflow Dashboard Pipeline Steps](./diagrams/kubeflow-pipeline-details.png)
  
 ### Access registered model in MLFlow
 
-1. Go to http://{KUBEFLOW_HOST}/_/pipeline/#/runs
+1. Go to http://{KUBEFLOW_HOST}/_/pipelines/#/runs
 2. Clicking the Run name with the Pipeline Version that contains the matching RUN_ID, `register-to-aml`, and `Logs`, you will get execution logs for pipeline steps, which shows the run_id.
 3. Go to http://{MLFLOW_HOST}/mlflow/#/models/tacosandburritos
 4. Clicking on the model version registered at the closest time to the execution of the KFP, you will get details about the Source Run.![MLFlow Model](./diagrams/mlflow-model.png)
