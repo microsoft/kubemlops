@@ -18,3 +18,11 @@ container: mlops
 
 steps:
   - template: code-quality-template.yml
+  - task: Bash@3
+    name: "compile_pipeline"
+    displayName: "Compile Pipeline"
+    inputs:
+      targetType: 'inline'
+      script: |
+        pip install kfp --upgrade --user
+        python code/pipelineazdo.py
