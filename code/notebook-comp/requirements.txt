@@ -1,0 +1,6 @@
+pathlib2
+ipython
+jupyter
+papermill
+kfp
+python-dotenv

@@ -1,0 +1,15 @@
+name: local-comp
+inputs:
+- {name: train_data_path, type: String}
+
+outputs:
+- {name: notebook_output, type: string}
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/notebook-comp:latest'
+    command: [
+      "python", "/scripts/program.py",
+      '--train_data_path', {inputValue: train_data_path},
+      '--notebook_output', {outputPath: notebook_output},
+        ]

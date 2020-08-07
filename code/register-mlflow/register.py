@@ -14,7 +14,7 @@ def get_run(external_run_id, experiment_name):
         filter_string="tags.external_run_id = '{0}'".format(external_run_id),
         run_view_type=ViewType.ACTIVE_ONLY,
         max_results=1
-        )[0]
+    )[0]
     return run
 
 

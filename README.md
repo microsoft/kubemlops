@@ -20,7 +20,7 @@ The architecture of the sample is shown in the following diagram:
   - Uploads the pipeline to Kubeflow
   - Runs the KFP
 
-For this sample, DataOps for ML and Observability are currently out of scope. 
+For this sample, DataOps for ML and Observability are currently out of scope.
 
 ## Prerequisites
 
@@ -38,6 +38,7 @@ This documentation helps you get started with the sample from infrastructure set
 - [Securing Kubeflow on AKS](./docs/Kubeflow-secure.md)
 - [MLOps with GitHub](./docs/mlops-github.md)
 - [MLOps with Azure DevOps](./docs/mlops-azdo.md)
+- [Local Dev Experience with Kubeflow](./docs/local-dev-exp.md)
 - [Experiment Tracking](./docs/experiment_tracking.md)
 
 Code for the following can be found in the code directory, but currently there is no documentation:

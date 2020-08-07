@@ -2,3 +2,17 @@
 .vscode/settings.json
 .DS_Store
 code/utils/__pycache__/azure_auth.cpython-37.pyc
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.vscode
+condaenv.*
+
+# Compiled KF Pipeline 
+*.tar.gz
