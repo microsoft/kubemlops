@@ -1,0 +1,17 @@
+pr: none
+trigger: none
+
+resources:
+  webhooks:
+    - webhook: kubeflowyo-kv          
+      connection: kubeflowyo-kv
+
+steps:
+  - task: Bash@3
+    name: "test"
+    displayName: "Testing"
+    inputs:
+      targetType: 'inline'
+      script: |
+        echo "yay"
+
