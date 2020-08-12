@@ -3,7 +3,7 @@ trigger: none
 
 resources:
   webhooks:
-    - webhook: kubeflowyo-kv          
+    - webhook: kubeflowyokv          
       connection: kubeflowyo-kv
 
 steps:
@@ -13,7 +13,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        echo ${{ parameters.kubeflowyo-kv.data.validationCode }}
-        echo ${{ parameters.kubeflowyo-kv.data.validationUrl }}
+        echo ${{ parameters.kubeflowyokv.data.validationCode }}
+        echo ${{ parameters.kubeflowyokv.data.validationUrl }}
         echo "yay"
 
