@@ -74,13 +74,18 @@ def tacosandburritos_train(
     with dsl.ExitHandler(exit_op=exit_handler_op):
 
         operations['mlflowproject'] = mlflow_project_op(mlflow_experiment_id=mlflow_experiment_id,  # noqa: E501
-                                                        kf_run_id=dsl.RUN_ID_PLACEHOLDER).apply(use_databricks_secret()).apply(use_image(mlflow_project_image_name))  # noqa: E501
+                                                        kf_run_id=dsl.RUN_ID_PLACEHOLDER). \
+            add_env_variable(V1EnvVar(name="APPLICATIONINSIGHTS_CONNECTION_STRING", value=appinsights_connection_str)). \
+            apply(use_databricks_secret()).apply(use_image(mlflow_project_image_name))  # noqa: E501
 
         operations['preprocess'] = preprocess_op(base_path=persistent_volume_path,  # noqa: E501
                                                  training_folder=training_folder,  # noqa: E501
                                                  target=training_dataset,
                                                  image_size=image_size,
-                                                 zipfile=dataset).apply(use_image(preprocess_image_name))  # noqa: E501
+                                                 zipfile=dataset). \
+            add_env_variable(V1EnvVar(name="APPLICATIONINSIGHTS_CONNECTION_STRING",  # noqa: E501
+                value=appinsights_connection_str)). \
+            apply(use_image(preprocess_image_name))  # noqa: E501
 
         operations['preprocess'].after(operations['mlflowproject'])  # noqa: E501
 
@@ -93,7 +98,7 @@ def tacosandburritos_train(
                                           model_folder=model_folder,
                                           images=training_dataset,
                                           dataset=operations['preprocess'].outputs['dataset']). \
-            set_memory_request('16G'). \
+            set_memory_request('8G'). \
             add_env_variable(V1EnvVar(name="RUN_ID", value=dsl.RUN_ID_PLACEHOLDER)). \
             add_env_variable(V1EnvVar(name="MLFLOW_TRACKING_URI", value=mlflow_url)). \
             add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \

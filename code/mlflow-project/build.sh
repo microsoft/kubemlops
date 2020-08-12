@@ -6,5 +6,5 @@ while getopts "r:" option;
     esac
 done
 cp -R ../ml_logging ml_logging
-IMAGE=${REGISTRY_NAME}.azurecr.io/training
+IMAGE=${REGISTRY_NAME}.azurecr.io/mlflowproject
 docker build -t $IMAGE . && docker run -it $IMAGE

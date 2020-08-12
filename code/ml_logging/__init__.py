@@ -17,11 +17,10 @@ import sys
 import os
 import logging
 from opencensus.ext.azure.log_exporter import AzureLogHandler
-from opencensus.trace import config_integration, span
+from opencensus.trace import config_integration
 from opencensus.trace.samplers import ProbabilitySampler
 from opencensus.trace.tracer import Tracer
 from opencensus.trace.logging_exporter import LoggingExporter
-import inspect
 import json
 
 # Add traceId and spanId context information to the available logging
@@ -31,6 +30,8 @@ config_integration.trace_integrations(['logging'])
 # Simple filter to restrict the upper bound of a log level. For example, it is
 # desireable to stop stdout from printing WARNING and ERROR. Combined with the
 # built in log level in the handler, this effectively gives us a range.
+
+
 class MaxLevelFilter(object):
     def __init__(self, level):
         self.level = level
@@ -54,6 +55,7 @@ def init_console_logging(logger):
     stdout_formatter = logging.Formatter('stdout_handler: %(levelname)s: traceId=%(traceId)s spanId=%(spanId)s %(filename)s:%(lineno)s - %(message)s')   # noqa: E501
     stdout_handler.setFormatter(stdout_formatter)
     logger.addHandler(stdout_handler)
+
 
 def init_azure_logging(logger):
     azure_monitor_key = os.environ.get('APPLICATIONINSIGHTS_CONNECTION_STRING')
@@ -109,27 +111,29 @@ class MLFlowContextFilter(logging.Filter):
         # Allow the record to propagate
         return True
 
+
 def get_tracer():
     return tracer
 
+
 def get_logger():
     return logger
+
 
 print('Initializing logging...')
 logger = logging.getLogger(__name__)  # Get root logger.
 mlflow_filter = MLFlowContextFilter()
 
 logger.addFilter(mlflow_filter)
-#logger.propagate = False
 
 # Log everything by default, delegate to handlers for their own levels.
 logger.setLevel(logging.DEBUG)
 
 # logger.debug('debug')
 # logger.info('info')
-#ogger.warning('warning')
-#logger.error('error')
-#logger.exception('exception')
+# ogger.warning('warning')
+# logger.error('error')
+# logger.exception('exception')
 
 
 init_console_logging(logger)

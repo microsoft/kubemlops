@@ -5,6 +5,7 @@ COPY requirements.txt /scripts/requirements.txt
 RUN pip install -r /scripts/requirements.txt
 
 COPY train.py /scripts/train.py
+COPY ml_logging /scripts/ml_logging
 
 # python train.py -d data/PetImages -e 1 -b 32 -l 0.0001 -o model -f dataset.txt
 # will be overwritten by kf pipeline

@@ -1,6 +1,9 @@
 import mlflow
 import os
 import click
+import ml_logging
+
+logger = ml_logging.get_logger()
 
 
 @click.command()
@@ -20,11 +23,11 @@ def run(experiement_id, kf_run_id):
     if (mlflowClient.info.status != "FINISHED"):
         raise Exception("MLflow Experiment failed")
 
-    print("Experiment Completed")
-    print("Status: " + mlflowClient.info.status)
-    print("MLFLOW Run ID: " + mlflowClient.info.run_id)
-    print("MLFLOW Artifact URI" + mlflowClient.info.artifact_uri)
-    print("KubeFlow Run ID" + kf_run_id)
+    logger.info("Experiment Completed")
+    logger.info("Status: " + mlflowClient.info.status)
+    logger.info("MLFLOW Run ID: " + mlflowClient.info.run_id)
+    logger.info("MLFLOW Artifact URI" + mlflowClient.info.artifact_uri)
+    logger.info("KubeFlow Run ID" + kf_run_id)
 
 
 if __name__ == '__main__':
