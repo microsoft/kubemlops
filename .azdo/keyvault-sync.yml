@@ -3,8 +3,8 @@ trigger: none
 
 resources:
   webhooks:
-    - webhook: kubeflowyokv
-      connection: kubeflowyokv
+    - webhook: kubeflowyokv2
+      connection: kubeflowyokv2
 
 steps:
   - task: Bash@3
@@ -13,7 +13,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        echo ${{ parameters.kubeflowyokv.data.validationCode }}
-        echo ${{ parameters.kubeflowyokv.data.validationUrl }}
+        echo ${{ parameters.kubeflowyokv2.data.validationCode }}
+        echo ${{ parameters.kubeflowyokv2.data.validationUrl }}
         echo "yay"
 
