@@ -3,8 +3,8 @@ trigger: none
 
 resources:
   webhooks:
-    - webhook: kubeflowyokv          
-      connection: kubeflowyo-kv
+    - webhook: kubeflowyokv
+      connection: kubeflowyokv
 
 steps:
   - task: Bash@3
