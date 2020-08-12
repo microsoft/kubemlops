@@ -16,3 +16,8 @@ condaenv.*
 
 # Compiled KF Pipeline 
 *.tar.gz
+
+# Python package build files
+code/logging/build/**
+code/logging/dist/**
+code/logging/*.egg-info

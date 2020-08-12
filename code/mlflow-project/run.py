@@ -1,9 +1,9 @@
 import mlflow
 import os
 import click
-import ml_logging
+import kubemlops.logging
 
-logger = ml_logging.get_logger()
+logger = kubemlops.logging.get_logger()
 
 
 @click.command()

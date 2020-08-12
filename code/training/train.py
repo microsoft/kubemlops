@@ -16,7 +16,7 @@ import pandas as pd
 import mlflow
 import mlflow.tensorflow
 
-import ml_logging
+import kubemlops.logging
 import logging
 import inspect
 
@@ -65,9 +65,9 @@ def install_exception_handler():
     print('Exception hook installed')
 
 
-logger = ml_logging.get_logger()
+logger = kubemlops.logging.get_logger()
 install_exception_handler()
-tracer = ml_logging.get_tracer()
+tracer = kubemlops.logging.get_tracer()
 
 
 def check_dir(path):

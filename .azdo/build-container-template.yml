@@ -22,6 +22,17 @@ parameters:
 
 
 steps:
+  - task: PipAuthenticate@1
+    displayName: Authenticate to private pip repo
+    inputs:
+      artifactFeeds: Kubeflow Integration/kubemlops@Local
+      onlyAddExtraIndex: true
+
+  - bash: |
+      echo "##vso[task.setvariable variable=pipRepoUrl;]$PIP_EXTRA_INDEX_URL"
+    displayName: Export pip private repo URL
+    condition: eq('${{ variables.pipRepoUrl }}', '')
+
   - task: AzureCLI@1
     name: "${{ parameters.taskname }}"
     displayName: Build and Push ${{ parameters.repository }}
@@ -47,6 +58,7 @@ steps:
             -t "${{ parameters.repository }}:$imageTag" \
             -t "${{ parameters.repository }}:latest" \
             -f "${{ parameters.dockerFile }}" \
+            --build-arg PIP_EXTRA_INDEX_URL="$(pipRepoUrl)" \
             ${{ parameters.customArguments }} \
             ${{ parameters.sourceLocation }}
         else

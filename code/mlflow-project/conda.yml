@@ -14,3 +14,4 @@ dependencies:
     - keras==2.2.4
     - mlflow>=1.0
     - opencensus-ext-azure
+    - opencensus-ext-logging

@@ -2,6 +2,4 @@ Pillow
 pathlib2
 pandas
 mlflow
-
-# Logging dependencies
-opencensus-ext-azure
+kubemlops-logging==0.1.dev1
