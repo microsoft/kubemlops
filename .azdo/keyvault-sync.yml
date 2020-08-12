@@ -13,7 +13,7 @@ steps:
     inputs:
       targetType: 'inline'
       script: |
-        echo ${{ parameters.kubeflowyokv2.data.validationCode }}
-        echo ${{ parameters.kubeflowyokv2.data.validationUrl }}
+        # echo ${{ parameters.kubeflowyokv2.data.validationCode }}
+        # echo ${{ parameters.kubeflowyokv2.data.validationUrl }}
         echo "yay"
 
