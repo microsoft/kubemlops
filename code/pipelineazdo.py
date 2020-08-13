@@ -7,7 +7,7 @@ import kfp.compiler as compiler
 import kfp.components as components
 from kfp.azure import use_azure_secret
 from kubernetes.client.models import V1EnvVar
-from utils.kfp_helper import use_databricks_secret, use_image, use_kfp_host_secret
+from utils.kfp_helper import use_databricks_secret, use_image, use_kfp_host_secret, use_secret_var
 
 
 persistent_volume_path = '/mnt/azure'
@@ -63,7 +63,12 @@ def tacosandburritos_train(
                               run_id=dsl.RUN_ID_PLACEHOLDER,
                               tenant_id="$(AZ_TENANT_ID)",
                               service_principal_id="$(AZ_CLIENT_ID)",
-                              service_principal_password="$(AZ_CLIENT_SECRET)").apply(use_azure_secret()).apply(use_kfp_host_secret()).apply(use_image(exit_image_name))  # noqa: E501
+                              service_principal_password="$(AZ_CLIENT_SECRET)",
+                              pat_env="PAT_ENV"
+                              ).apply(use_azure_secret()
+                              ).apply(use_kfp_host_secret()
+                              ).apply(use_image(exit_image_name)
+                              ).apply(use_secret_var("azdopat", "PAT_ENV", "azdopat"))
 
     with dsl.ExitHandler(exit_op=exit_handler_op):
 

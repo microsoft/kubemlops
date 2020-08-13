@@ -1,9 +1,11 @@
+import base64
 import json
 import requests
 import time
 import argparse
 import kfp
 import adal
+import os
 
 
 def info(msg, char="#", width=75):
@@ -13,18 +15,18 @@ def info(msg, char="#", width=75):
     print(char * width)
 
 
-def send_complete_event(callbackinfo, status):  # noqa: E501
+def send_complete_event(callbackinfo, pat, status):  # noqa: E501
     callback_vars = json.loads(callbackinfo.replace("'", '"'))  # noqa: E501
     url = r"{planUri}/{projectId}/_apis/distributedtask/hubs/{hubName}/plans/{planId}/events?api-version=2.0-preview.1".format(                           # noqa: E501
         planUri=callback_vars["PlanUri"], projectId=callback_vars["ProjectId"], hubName=callback_vars["HubName"], planId=callback_vars["PlanId"])          # noqa: E501
     data = {'name': 'TaskCompleted',
             'taskId': callback_vars["TaskInstanceId"], 'jobId': callback_vars["JobId"], 'result': status}   # noqa: E501
-    header = {'Authorization': 'Bearer ' + callback_vars["AuthToken"]}
+    header = {'Authorization': 'Basic ' + pat}
     response = requests.post(url, json=data, headers=header)
     print(response)
 
 
-def get_compoenet_status(kfp_host_url, kfp_run_id, token=None):
+def get_component_status(kfp_host_url, kfp_run_id, token=None):
     status = "Suceeded"
     client = kfp.Client(host=kfp_host_url,
                         existing_token=token)
@@ -52,6 +54,21 @@ def get_access_token(tenant, clientId, client_secret):
     return token['accessToken']
 
 
+def get_pat(pat_env, pat_path_env):
+    if pat_env:
+        # Read PAT from env var
+        pat = os.environ[pat_env]
+    elif pat_path_env:
+        # Read PAT from file
+        with open(os.environ[pat_path_env], 'r') as f:
+            pat = f.readline()
+        f.close
+    else:
+        raise Exception('Please provide a PAT via pat_env or pat_path_env')
+    pat = ":" + pat
+    return str(base64.b64encode(pat.encode("utf-8")), "utf-8")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Azure DevOps Callback')
     parser.add_argument('-hst', '--kfp_host_url',
@@ -65,8 +82,14 @@ if __name__ == "__main__":
                         help='service_principal_id')
     parser.add_argument('-p', '--service_principal_password',
                         help='service_principal_password')
+    parser.add_argument('-ppe', '--pat_path_env',
+                        help='Name of environment variable containing the path to the Azure DevOps PAT')  # noqa: E501
+    parser.add_argument('-pe', '--pat_env',
+                        help='Name of environment variable containing the Azure DevOps PAT')  # noqa: E501
     args = parser.parse_args()
 
-    status = get_compoenet_status(args.kfp_host_url, args.run_id, get_access_token(    # noqa: E501
+    pat = get_pat(args.pat_env, args.pat_path_env)
+
+    status = get_component_status(args.kfp_host_url, args.run_id, get_access_token(    # noqa: E501
         args.tenant_id, args.service_principal_id, args.service_principal_password))  # noqa: E501
-    send_complete_event(args.azdocallback, status)
+    send_complete_event(args.azdocallback, pat, status)

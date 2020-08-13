@@ -62,6 +62,27 @@ def use_kfp_host_secret(secret_name='kfp-host-secret'):
     return _use_kfp_host_secret
 
 
+def use_secret_var(secret_name, env_var_name, secret_key):
+    def _use_secret_var(task):
+        from kubernetes import client as k8s_client
+        (
+            task.container
+                .add_env_variable(
+                    k8s_client.V1EnvVar(
+                        name=env_var_name,
+                        value_from=k8s_client.V1EnvVarSource(
+                            secret_key_ref=k8s_client.V1SecretKeySelector(
+                                name=secret_name,
+                                key=secret_key
+                            )
+                        )
+                    )
+                )
+        )
+        return task
+    return _use_secret_var
+
+
 def use_image(image_name):
     def _use_image(task):
         task.image = image_name

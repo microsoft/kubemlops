@@ -26,6 +26,7 @@ POSSIBILITY OF SUCH DAMAGE.
 """
 
 import argparse
+import os
 from azure.devops.connection import Connection
 from msrest.authentication import BasicAuthentication
 
@@ -79,6 +80,10 @@ def main():
     parser.add_argument('-i', '--id',
                         required=True,
                         help='Id of the pipeline definition')
+    parser.add_argument('-ppe', '--pat_path_env',
+                        help='Name of environment variable containing the path to the Azure DevOps PAT')  # noqa: E501
+    parser.add_argument('-pe', '--pat_env',
+                        help='Name of environment variable containing the Azure DevOps PAT')  # noqa: E501
     parser.add_argument(
         '--source_branch', help='Source branch for the pipeline')
     parser.add_argument(
@@ -86,12 +91,18 @@ def main():
     parser.add_argument(
         '--parameters', help='Parameters for the pipeline')
 
-    # Read PAT from file
-    with open("/app/secrets/azdopat", 'r') as f:
-        pat = f.readline()
-    f.close()
-
     args = parser.parse_args()
+
+    if args.pat_env:
+        # Read PAT from env var
+        pat = os.environ[args.pat_env]
+    elif args.pat_path_env:
+        # Read PAT from file
+        with open(os.environ[args.pat_path_env], 'r') as f:
+            pat = f.readline()
+        f.close
+    else:
+        raise Exception('Please provide a PAT via pat_env or pat_path_env')
 
     client = get_client(args.organization, pat)
     build = define_build(args.id,
