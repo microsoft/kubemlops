@@ -1,0 +1,8 @@
+name: gpu-op 
+
+implementation:
+  container:
+    image: 'kubeflowyoacr.azurecr.io/mexicanfood/gpu-op:latest'
+    command: [
+      "python", "/scripts/program.py"      
+    ]

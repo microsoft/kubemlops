@@ -40,6 +40,7 @@ This documentation helps you get started with the sample from infrastructure set
 - [MLOps with Azure DevOps](./docs/mlops-azdo.md)
 - [Local Dev Experience with Kubeflow](./docs/local-dev-exp.md)
 - [Experiment Tracking](./docs/experiment_tracking.md)
+- [Enable GPU for Kubeflow Pipelines on Azure Kubernetes Service (AKS)](./docs/enable-gpu-workload.md)
 
 Code for the following can be found in the code directory, but currently there is no documentation:
 
