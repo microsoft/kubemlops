@@ -53,7 +53,8 @@ stages:
         script: |
           set -euxo pipefail
           cd "$(Build.SourcesDirectory)/code/seldon"
-          mlflow_run_id=`curl -d '{"experiment_ids":['$(MLFLOW_EXPERIMENT)'],"filter":"tags.external_run_id='\'''$(RUN_ID)''\''"}' $(KF_ENDPOINT)/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id'`
+          curl -d "{\"experiment_ids\":\"$(MLFLOW_EXPERIMENT)\",\"filter\":\"tags.external_run_id='$(RUN_ID)'\"}" $(KF_ENDPOINT)/mlflow/api/2.0/preview/mlflow/runs/search
+          mlflow_run_id=`curl -d "{\"experiment_ids\":\"$(MLFLOW_EXPERIMENT)\",\"filter\":\"tags.external_run_id='$(RUN_ID)'\"}" $(KF_ENDPOINT)/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id'`
           curl -L '$(KF_ENDPOINT)/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
 
           set +x
