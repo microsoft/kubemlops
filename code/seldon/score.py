@@ -6,9 +6,11 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 from flask import Flask, request
+from opencensus.ext.flask.flask_middleware import FlaskMiddleware
 
 
 application = Flask(__name__)
+middleware = FlaskMiddleware(application)
 
 model = None
 
@@ -69,4 +71,7 @@ def process_image(path, image_size):
 
 
 if __name__ == "__main__":
+    import logging
+    logger = logging.getLogger('werkzeug')
+    logger.setLevel(logging.INFO)
     application.run(host='0.0.0.0')

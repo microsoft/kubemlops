@@ -1,8 +1,9 @@
 from flask import Flask, request
 import random
-
+from opencensus.ext.flask.flask_middleware import FlaskMiddleware
 
 application = Flask(__name__)
+middleware = FlaskMiddleware(application)
 
 
 #  Randomly route to either 1st or 2nd child
@@ -78,4 +79,7 @@ def transform_output():
 
 
 if __name__ == "__main__":
+    import logging
+    logger = logging.getLogger('werkzeug')
+    logger.setLevel(logging.INFO)
     application.run(host='0.0.0.0')

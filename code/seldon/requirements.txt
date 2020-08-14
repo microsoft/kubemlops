@@ -4,3 +4,7 @@ numpy
 tensorflow==2.0.0-alpha0
 Pillow
 requests
+
+# Logging requirements
+opencensus-ext-azure
+opencensus-ext-flask
