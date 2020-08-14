@@ -53,8 +53,8 @@ stages:
         script: |
           set -euxo pipefail
           cd "$(Build.SourcesDirectory)/code/seldon"
-          mlflow_run_id=`curl -d '{"experiment_ids":['$(MLFLOW_EXPERIMENT)'],"filter":"tags.external_run_id='\'''$(RUN_ID)''\''"}' $(KF_ENDPOINT_ASYNC)/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id'`
-          curl -L '$(KF_ENDPOINT_ASYNC)/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
+          mlflow_run_id=`curl -d '{"experiment_ids":['$(MLFLOW_EXPERIMENT)'],"filter":"tags.external_run_id='\'''$(RUN_ID)''\''"}' $(KF_ENDPOINT)/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id'`
+          curl -L '$(KF_ENDPOINT)/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
 
           set +x
           echo "##vso[task.setvariable variable=MLFLOW_RUN_ID]$mlflow_run_id"
@@ -72,8 +72,8 @@ stages:
         taskname: 'seldon_container'
     - script: |
         set -euxo pipefail
-        body=`curl $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$(MLFLOW_RUN_ID)%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output`
-        curl -d $body $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
+        body=`curl $(KF_ENDPOINT)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$(MLFLOW_RUN_ID)%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output`
+        curl -d $body $(KF_ENDPOINT)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
       displayName: "Promote model to Staging"
     - task: HelmDeploy@0
       displayName: Deploy to SeldonCore
@@ -103,8 +103,8 @@ stages:
     - script: |
         set -euxo pipefail
         MLFLOW_RUN_ID=`cat $(Pipeline.Workspace)/variables/MLFLOW_RUN_ID`
-        body=`curl $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$MLFLOW_RUN_ID%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Production --compact-output`
-        curl -d $body $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
+        body=`curl $(KF_ENDPOINT)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$MLFLOW_RUN_ID%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Production --compact-output`
+        curl -d $body $(KF_ENDPOINT)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
       displayName: "Promote model to Production"
     - task: AzureCLI@1
       displayName: Run deploy script
