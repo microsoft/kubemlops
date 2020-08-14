@@ -69,6 +69,7 @@ stages:
         containerReferences: '$(Build.SourcesDirectory)/code/seldon'
         acr: $(ACR_NAME)
         repository: 'mexicanfood/mlflowproject2'
+        taskname: 'seldon_container'
     - script: |
         set -euxo pipefail
         body=`curl $(KF_ENDPOINT_ASYNC)/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27$(MLFLOW_RUN_ID)%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output`
