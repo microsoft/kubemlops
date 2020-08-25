@@ -98,6 +98,19 @@ def tacosandburritos_train(
             add_env_variable(V1EnvVar(name="GIT_PYTHON_REFRESH", value='quiet')). \
             apply(use_image(train_image_name))
 
+        # Spot nodepool target
+        # operations['training'].add_toleration(k8s_client.V1Toleration(
+        #     key='kubernetes.azure.com/scalesetpriority',
+        #     operator='Equal',
+        #     value='spot',
+        #     effect="NoSchedule"))
+
+        # Virtual/ACI nodepool target
+        # operations['training'].add_node_selector_constraint(
+        #     label_name='type', value='virtual-kubelet')
+        # operations['training'].add_toleration(k8s_client.V1Toleration(
+        #     key='virtual-kubelet.io/provider', operator='Exists'))
+
         operations['training'].after(operations['preprocess'])
 
         operations['evaluate'] = evaluate_op(
