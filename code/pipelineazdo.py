@@ -152,6 +152,9 @@ def tacosandburritos_train(
             )
         ).add_volume_mount(k8s_client.V1VolumeMount(
             mount_path='/mnt/azure', name='azure'))
+        # Add KFP Run ID and task name as a workaround for the dashboards
+        op_1.add_pod_label(name="pipelines.kubeflow.org/run_id", value=f'{dsl.RUN_ID_PLACEHOLDER}')
+        op_1.add_pod_label(name="pipelines.kubeflow.org/name", value=op_1.name.replace(" ", "_"))
 
 
 if __name__ == '__main__':
