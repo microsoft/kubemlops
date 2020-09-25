@@ -1,0 +1,47 @@
+
+apiVersion: machinelearning.seldon.io/v1alpha2
+kind: SeldonDeployment
+metadata:
+  name: mexicanfood-canary
+spec:
+  name: mexicanfood-deployment
+  predictors:
+  # Green model deployment
+  - componentSpecs:
+    - spec:
+        containers:
+        - image: eugenefedorenko/samplemodel:1.0.0
+          name: mexicanfood-classifier
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8080
+            name: http
+    graph:
+      children: []
+      endpoint:
+        type: REST
+      name: mexicanfood-classifier
+    name: mexicanfood-predictor-green
+    replicas: 1
+    traffic: 70
+  # Blue model deployment  
+  - componentSpecs:
+    - spec:
+        containers:
+        - image: eugenefedorenko/samplemodel:2.0.0
+          name: mexicanfood-classifier
+          imagePullPolicy: Always
+          ports: 
+          - containerPort: 8080
+            name: http
+    graph:
+      children: []
+      endpoint:
+        type: REST
+      name: mexicanfood-classifier
+    name: mexicanfood-predictor-blue
+    replicas: 1  
+    traffic: 30  
+
+
+    

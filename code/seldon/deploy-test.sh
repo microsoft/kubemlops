@@ -8,3 +8,6 @@ curl -v -H "Content-Type: application/json" -d '{"image":"https://www.inspiredta
 CLUSTER_IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
 curl -v -H "Content-Type: application/json" -d '{"image":"https://www.inspiredtaste.net/wp-content/uploads/2018/03/Easy-Ground-Pork-Tacos-Recipe-3-1200.jpg"}' $CLUSTER_IP/seldon/$NAMESPACE/mexicanfood/api/v0.1/predictions
 
+# To test canary deployment
+curl -v -H "Content-Type: application/json" -d '{"image":"https://www.inspiredtaste.net/wp-content/uploads/2018/03/Easy-Ground-Pork-Tacos-Recipe-3-1200.jpg"}' $CLUSTER_IP/seldon/$NAMESPACE/mexicanfood-canary/api/v0.1/predictions
+
