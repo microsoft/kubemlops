@@ -1,0 +1,28 @@
+{
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "themeColor": "0076D7",
+    "summary": "Kubeflow Pipeline Step succeeded",
+    "sections": [
+        {
+            "activityTitle": "Kubeflow Pipeline Step succeeded",
+            "activitySubtitle": "Step $object_name in pipeline run $kfp_run_id",
+            "activityImage": "https://thumbs.dreamstime.com/b/silhouette-man-succeeded-climbing-against-snowy-mountains-74151498.jpg",
+            "facts": [
+            ],
+            "markdown": true
+        }
+    ],
+    "potentialAction": [
+        {
+            "@type": "OpenUri",
+            "name": "View Pipeline Run",
+            "targets": [
+                {
+                    "os": "default",
+                    "uri": "$kfp_run_uri"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,32 @@
+{
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "themeColor": "0076D7",
+    "summary": "Kubeflow Pipeline started",
+    "sections": [
+        {
+            "activityTitle": "Kubeflow Pipeline started",
+            "activitySubtitle": "Pipeline Run $kfp_run_id",
+            "activityImage": "http://www.asparkstarts.com/wp-content/uploads/2015/01/start-button-1024x819.jpg",
+            "facts": [
+                {
+                    "name": "Workflow",
+                    "value": "$object_name"
+                }
+            ],
+            "markdown": true
+        }
+    ],
+    "potentialAction": [
+        {
+            "@type": "OpenUri",
+            "name": "View Pipeline Run",
+            "targets": [
+                {
+                    "os": "default",
+                    "uri": "$kfp_run_uri"
+                }
+            ]
+        }
+    ]
+}

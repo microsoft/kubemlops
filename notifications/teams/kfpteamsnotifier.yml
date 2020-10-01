@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kfpteamsnotifier
+  labels:
+    app: kfpteamsnotifier
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kfpteamsnotifier
+  template:
+    metadata:
+      labels:
+        app: kfpteamsnotifier
+    spec:
+      containers:
+      - name: main
+        image: kubeflowyoacr.azurecr.io/kfp-teams-notifier:1.0.5
+        env:
+        - name: KFP_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: kfpteamsnotifier-secret
+              key: kfp_endpoint
+        - name: TEAMS_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: kfpteamsnotifier-secret
+              key: teams_endpoint
+        imagePullPolicy: Always
+        ports:
+        - name: http
+          containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kfpteamsnotifier-svc
+spec:
+  selector:
+    app: kfpteamsnotifier   
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: kfpteamsnotifier-secret
+# type: Opaque
+# stringData:
+#   kfp_endpoint: http://localhost:8080
+#  # See https://docs.microsoft.com/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook#add-an-incoming-webhook-to-a-teams-channel
+#  # to set up a webhook to a Teams channel   
+#   teams_endpoint: <TEAMS_WEBHOOK_URI>
+

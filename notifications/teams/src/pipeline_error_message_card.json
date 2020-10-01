@@ -1,0 +1,37 @@
+{
+    "@type": "MessageCard",
+    "@context": "http://schema.org/extensions",
+    "themeColor": "0076D7",
+    "summary": "Kubeflow Pipeline Run failed",
+    "sections": [
+        {
+            "activityTitle": "Kubeflow Pipeline Run failed",
+            "activitySubtitle": "Pipeline Run $kfp_run_id",
+            "activityImage": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Error.svg/1200px-Error.svg.png",
+            "facts": [
+                {
+                    "name": "Workflow",
+                    "value": "$object_name"
+                },
+                {
+                    "name": "Reason",
+                    "value": "$message"
+                }                
+
+            ],
+            "markdown": true
+        }
+    ],
+    "potentialAction": [
+        {
+            "@type": "OpenUri",
+            "name": "View Pipeline Run",
+            "targets": [
+                {
+                    "os": "default",
+                    "uri": "$kfp_run_uri"
+                }
+            ]
+        }
+    ]
+}
