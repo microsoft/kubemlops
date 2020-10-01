@@ -9,7 +9,9 @@ kubectl wait crd/applications.app.k8s.io --for condition=established --timeout=6
 # https://github.com/kubeflow/pipelines/issues/1654
 # https://github.com/kubeflow/pipelines/issues/1654#issuecomment-595722994
 kubectl patch configmap/workflow-controller-configmap -n kubeflow --patch  "$(cat workflow-controller-configmap-patch.yaml)"
-kubectl apply -k github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic
+
+# default: github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic
+kubectl apply -k $KFP_DEPLOY_PATH
 
 # Apply this role and binding to fix the permission issue of cache-deployer-deployment
 # https://github.com/kubeflow/pipelines/pull/4246

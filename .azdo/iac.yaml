@@ -7,6 +7,13 @@ variables:
 pool:
   vmImage: ubuntu-latest
 
+resources:
+  repositories:
+  - repository: kfp_kustomize
+    type: GitHub
+    name: https://github.com/jotaylo/pipelines.git
+    ref: refs/heads/azure_mysql_minio
+
 stages:
 - stage: "Provision_K8s_cluster"
   displayName: "Provision K8s cluster"
@@ -20,19 +27,31 @@ stages:
           scriptLocation: 'scriptPath'
           scriptPath: 'setup/iac/aks-create.sh'
           displayName: Create AKS instance
+      - task: AzureCLI@2
+        inputs:
+          azureSubscription: '$(AZURE_SUBSCRIPTION)'
+          scriptType: 'bash'
+          scriptLocation: 'scriptPath'
+          scriptPath: 'setup/iac/mysql-blob-create.sh'
+          displayName: 'Set up Azure Backed resources'
 
 - stage: "Install_K8s_applications"
   displayName: "Install_K8s_applications"
   jobs:
     - job:
-      steps:  
+      steps:
+      - checkout: self
+      - checkout: kfp_kustomize
+      - script: dir $(Build.SourcesDirectory)
+      
       - task: AzureCLI@2          
         inputs:
           azureSubscription: '$(AZURE_SUBSCRIPTION)'
           scriptType: 'bash'
           scriptLocation: 'inlineScript'
           inlineScript: |
-            az aks get-credentials -n $AKS_NAME -g $RESOURCE_GROUP 
+            az aks get-credentials -n $AKS_NAME -g $RESOURCE_GROUP
+            echo "##vso[task.setvariable variable=STORAGE_KEY;issecret=true;]$(az storage account keys list -g $RESOURCE_GROUP -n $STORAGE_NAME | jq .[0].value)
           displayName: Get AKS credentials
     
       - task: Bash@3
