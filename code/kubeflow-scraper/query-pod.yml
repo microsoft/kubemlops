@@ -1,0 +1,101 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kfp-exporter
+  namespace: kubeflow
+  labels:
+    app: kfp-exporter
+    release: kube-prometheus-stack
+spec:
+  type: ClusterIP
+  ports:
+    - port: 9560
+      targetPort: 9560
+      protocol: TCP
+      name: http-metrics
+  selector:
+    app: kfp-exporter
+    release: kube-prometheus-stack
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kfp-exporter
+  namespace: kubeflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kfp-exporter
+      release: kube-prometheus-stack
+  template:
+    metadata:
+      labels:
+        app: kfp-exporter
+        release: kube-prometheus-stack
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: '/metrics'
+        prometheus.io/port: '9560'
+    spec:
+      containers:
+        - name: kfp-exporter
+          image: "adonato/query-exporter:2.4.0"
+          imagePullPolicy: IfNotPresent
+          command: ["query-exporter", "/config/config.yaml", "-H", "0.0.0.0"]
+          ports:
+            - name: http-metrics
+              containerPort: 9560
+              protocol: TCP
+          volumeMounts:
+            - mountPath: "/config"
+              name: kfp-exporter-config
+          env:
+          - name: KFP_DB_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: kfp-exporter-secret
+                key: kfp-db-connection-string
+          - name: METADATA_DB_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: kfp-exporter-secret
+                key: metadata-db-connection-string
+      volumes:
+          - name: kfp-exporter-config
+            configMap:
+              name: kfp-exporter-config
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kfp-exporter-secret
+  namespace: kubeflow
+  labels:
+    release: kube-prometheus-stack
+    app: kfp-exporter
+type: Opaque
+stringData:
+  kfp-db-connection-string: mysql://kfpexporter:<password>@mysql.kubeflow.svc.cluster.local:3306/mlpipeline
+  metadata-db-connection-string: mysql://kfpexporter:<password>@mysql.kubeflow.svc.cluster.local:3306/metadb
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kfp-exporter
+  namespace: monitoring
+  labels:
+    release: kube-prometheus-stack
+    app: kfp-exporter
+spec:
+  jobLabel: kfp-exporter
+  selector:
+    matchLabels:
+      release: kube-prometheus-stack
+      app: kfp-exporter
+  namespaceSelector:
+    matchNames:
+    - kubeflow
+  endpoints:
+  - port: http-metrics
+    interval: 300s

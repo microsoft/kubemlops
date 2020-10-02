@@ -1,0 +1,97 @@
+databases:
+  kfp_db:
+    dsn: env:KFP_DB_CONNECTION_STRING
+  meta_db:
+    dsn: env:METADATA_DB_CONNECTION_STRING
+
+metrics:
+  kfp_run_info:
+    type: gauge
+    description: KubeFlow Run Details
+    labels: [
+      kfp_run_id, kfp_run_name,
+      kfp_workload_name,
+      kfp_pipeline_id, kfp_pipeline_name,
+      kfp_parameters,
+      kfp_experiment_id, kfp_experiment_name
+    ]
+  kfp_run_created:
+    type: gauge
+    description: KubeFlow run creation unix timestamp
+    labels:
+      [
+        kfp_run_id
+      ]
+  kfp_run_finished:
+    type: gauge
+    description: KubeFlow run finish unix timestamp
+    labels:
+      [
+        kfp_run_id
+      ]
+  kfp_run_status:
+    type: enum
+    description: KubeFlow run kfp_run_status
+    states: [
+      Running,
+      Error,
+      Failed,
+      Succeeded
+    ]
+    labels:
+      [
+        kfp_run_id
+      ]
+  kfp_pod_info:
+    type: gauge
+    description: KubeFlow Pod Descriptions
+    labels: [
+      kfp_workload_name,
+      kfp_pod_name, kfp_pod_desc
+    ]
+
+queries:
+  kfp_runs:
+    interval: 300
+    databases: [kfp_db]
+    metrics: [kfp_run_info, kfp_run_created, kfp_run_finished, kfp_run_status]
+    sql: |
+      SELECT run_details.UUID AS kfp_run_id,
+        run_details.DisplayName AS kfp_run_name,
+        run_details.Name AS kfp_workload_name,
+        run_details.CreatedAtInSec AS kfp_run_created,
+        run_details.FinishedAtInSec AS kfp_run_finished,
+        run_details.Conditions AS kfp_run_status,
+        run_details.PipelineId AS kfp_pipeline_id,
+        run_details.PipelineName AS kfp_pipeline_name,
+        run_details.Parameters AS kfp_parameters,
+        experiments.UUID as kfp_experiment_id,
+        experiments.Name as kfp_experiment_name,
+        1 as kfp_run_info
+      FROM mlpipeline.run_details
+      INNER JOIN experiments
+        ON run_details.ExperimentUUID = experiments.UUID
+      WHERE run_details.CreatedAtInSec >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE)
+        AND run_details.StorageState = "STORAGESTATE_AVAILABLE";
+  kfp_pods:
+    interval: 300
+    databases: [meta_db]
+    metrics: [kfp_pod_info]
+    sql: |
+      SELECT DISTINCT
+        j.string_value AS 'kfp_workload_name',
+        k.string_value AS 'kfp_pod_name',
+        l.string_value AS 'kfp_pod_desc',
+        1 AS 'kfp_pod_info'
+      FROM metadb.ExecutionProperty AS i
+      INNER JOIN metadb.ExecutionProperty AS j
+        ON i.execution_id = j.execution_id AND j.name = 'run_id'
+      INNER JOIN metadb.ExecutionProperty AS k 
+        ON i.execution_id = k.execution_id AND k.name = 'kfp_pod_name'
+      INNER JOIN metadb.ExecutionProperty AS l 
+        ON i.execution_id = l.execution_id AND l.name = 'component_id'
+      WHERE i.execution_id IN (
+        SELECT id
+        FROM metadb.Execution
+        WHERE create_time_since_epoch >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE) * 1000
+      );
