@@ -34,7 +34,7 @@ When starting a new container using Docker CLI, here's how you mount a local "./
   
    **Mounting Windows host directory to docker (For Windows):**
    
-   Local path mounting is not possible without enabling (file share)[https://docs.docker.com/docker-for-windows/#file-sharing] on Windows. The File sharing tab is only available in Hyper-V mode, because in WSL 2 mode and Windows container mode all files are automatically shared by Windows.
+   Local path mounting is not possible without enabling [file share](https://docs.docker.com/docker-for-windows/#file-sharing) on Windows. The File sharing tab is only available in Hyper-V mode, because in WSL 2 mode and Windows container mode all files are automatically shared by Windows.
    
    > docker run --mount type=bind,source="%CD%\ames_dataset",target=/mnt/data -it datapreparation --input-file-path=/mnt/data --output-train-path=/tmp/train.csv --output-test-path=/tmp/test.csv
     
