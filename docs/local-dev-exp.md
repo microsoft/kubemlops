@@ -36,7 +36,7 @@ Refer to [example notebook](../code/experimentation-notebooks/multistep_kfp_note
 
 **Advantages over container components**
 
-- Faster iteration: No need to build a new container image after every change (building images takes some time). You can [Speed Up Your Dockerized Development Workflow](./docs/dev-locally-on-docker.md)
+- Faster iteration: No need to build a new container image after every change (building images takes some time). You can [Speed Up Your Dockerized Development Workflow](./dev-locally-on-docker.md)
 - Easier authoring: Components can be created in a local environment. Docker and Kubernetes are not required.
 
 Read more on requirements for [building a lightweight Python component](https://www.kubeflow.org/docs/pipelines/sdk/lightweight-python-components/)
