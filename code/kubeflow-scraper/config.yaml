@@ -72,6 +72,7 @@ queries:
       INNER JOIN experiments
         ON run_details.ExperimentUUID = experiments.UUID
       WHERE run_details.CreatedAtInSec >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE)
+        OR run_details.FinishedAtInSec >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE)
         AND run_details.StorageState = "STORAGESTATE_AVAILABLE";
   kfp_pods:
     interval: 300
@@ -94,4 +95,5 @@ queries:
         SELECT id
         FROM metadb.Execution
         WHERE create_time_since_epoch >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE) * 1000
+          OR last_update_time_since_epoch >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE) * 1000
       );
