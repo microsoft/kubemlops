@@ -1,0 +1,73 @@
+name: Manifest_Test
+# The pipeline is triggered on:
+#  - PR comment "/trigger-manifest-tests" (trigger-manifest-tests)
+on:
+  push:
+    branches: [master]
+#   pull_request:
+#     branches: [master]
+  issue_comment:
+    types: [created]
+env: 
+  RESOURCE_GROUP: kf-test-rg
+  CLUSTER_NAME: kf-test-cluster
+  CLUSTER_SIZE: Standard_D4s_v3
+  REGION: westus2
+  AGENT_COUNT: 2
+
+  KUBEFLOW_ADDRESS: https://github.com/kubeflow/kfctl/releases/download/v1.1.0/kfctl_v1.1.0-0-g9a3621e_linux.tar.gz
+  KUBEFLOW_JAR_NAME: kfctl_v1.1.0-0-g9a3621e_linux.tar.gz
+  MANIFEST: https://raw.githubusercontent.com/kubeflow/manifests/v1.1-branch/kfdef/kfctl_azure.v1.1.0.yaml
+
+jobs:
+  manifest_test:
+    runs-on: ubuntu-latest
+    if: contains(github.event.comment.body, '/trigger-manifest-tests') || github.event_name != 'issue_comment'
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Azure Login
+        uses: Azure/login@v1
+        with:
+          # Paste output of `az ad sp create-for-rbac` as value of secret variable: AZURE_CREDENTIALS
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          # Set this value to true to enable Azure PowerShell Login in addition to Az CLI login
+          enable-AzPSSession: true
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Kubectl tool installer
+        uses: Azure/setup-kubectl@v1
+        with:
+          # Version of kubectl
+          version: latest
+      - name: Create Resource Group
+        run: |
+          # az login using service principal
+          az login --service-principal --username ${{ secrets.APP_ID }} --password ${{ secrets.PASSWORD }} --tenant ${{ secrets.TENANT_ID }}
+          az group create -n ${{ env.RESOURCE_GROUP }} -l ${{ env.REGION }} 
+      - name: Install curl
+        run: sudo apt install curl
+      - name: Create AKS cluster and Install Kubeflow
+        run: |
+          az aks create -g ${{ env.RESOURCE_GROUP }} -n ${{ env.CLUSTER_NAME }} -s ${{ env.CLUSTER_SIZE }} -c ${{ env.AGENT_COUNT }} -l ${{ env.REGION }} --service-principal ${{ secrets.APP_ID }} --client-secret ${{ secrets.PASSWORD }} --generate-ssh-keys
+          az aks get-credentials -n ${{ env.CLUSTER_NAME }} -g ${{ env.RESOURCE_GROUP }}
+          # Steps for installing KF should follow steps.sh
+          # Passing three variables to the shell script for kubeflow url, jar name and manifest url
+          sh steps.sh ${{ env.KUBEFLOW_ADDRESS }} ${{ env.KUBEFLOW_JAR_NAME }} ${{ env.MANIFEST }}
+        working-directory: code/tests
+      - name: Wait for all the resources ready
+        run: |
+          pip install kubernetes
+          python availability_tests.py
+        working-directory: code/tests 
+      - name: Run Test Script
+        run: |
+          pip install kfp
+          python manifest_tests.py
+        working-directory: code/tests
+        env:
+          PR_NUM: ${{ github.event.issue.number }}
+      - name: Clean up resources
+        run: az group delete --name ${{ env.RESOURCE_GROUP }} --yes
