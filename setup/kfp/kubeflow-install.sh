@@ -9,10 +9,17 @@ kubectl wait crd/applications.app.k8s.io --for condition=established --timeout=6
 # https://github.com/kubeflow/pipelines/issues/1654
 # https://github.com/kubeflow/pipelines/issues/1654#issuecomment-595722994
 kubectl patch configmap/workflow-controller-configmap -n kubeflow --patch  "$(cat workflow-controller-configmap-patch.yaml)"
-kubectl apply -k github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic
 
-# Apply this role and binding to fix the permission issue of cache-deployer-deployment
-# https://github.com/kubeflow/pipelines/pull/4246
-kubectl apply -f crb.yaml
+
+### To use default cloud agnostic storages for Kubeflow pipelines metadata, apply the following
+    kubectl apply -k github.com/kubeflow/pipelines/manifests/kustomize/env/platform-agnostic
+
+### To backup Kubeflow pipelines metadata with managed Azure services follow the instructions:
+### https://github.com/kubeflow/pipelines/blob/master/manifests/kustomize/env/azure/readme.md
+### and apply the following:
+    kubectl apply -k github.com/kubeflow/pipelines/manifests/kustomize/env/azure
+
+
+# Apply the Istio resources
 kubectl apply -f istio-resources.yaml
 
