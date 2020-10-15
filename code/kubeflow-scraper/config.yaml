@@ -49,6 +49,14 @@ metrics:
       kfp_workload_name,
       kfp_pod_name, kfp_pod_desc
     ]
+  kfp_metric:
+    type: gauge
+    description: KubeFlow Run Metric Details
+    labels: [
+      kfp_run_id, 
+      kfp_pod_name, kfp_metric_name,
+      kfp_experiment_id
+    ]
 
 queries:
   kfp_runs:
@@ -97,3 +105,19 @@ queries:
         WHERE create_time_since_epoch >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE) * 1000
           OR last_update_time_since_epoch >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE) * 1000
       );
+  kfp_metrics:
+    interval: 300
+    databases: [kfp_db]
+    metrics: [kfp_metric]
+    sql: |
+      SELECT run_metrics.RunUUID AS kfp_run_id, 
+        run_metrics.NodeID AS kfp_pod_name, 
+        run_metrics.Name AS kfp_metric_name, 
+        run_metrics.NumberValue AS kfp_metric,
+        run_details.ExperimentUUID AS kfp_experiment_id
+      FROM mlpipeline.run_metrics
+      INNER JOIN mlpipeline.run_details
+        ON run_metrics.RunUUID = run_details.UUID
+      WHERE run_details.CreatedAtInSec >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE)
+        OR run_details.FinishedAtInSec >= UNIX_TIMESTAMP(NOW() - INTERVAL 30 MINUTE)
+        AND run_details.StorageState = "STORAGESTATE_AVAILABLE";
