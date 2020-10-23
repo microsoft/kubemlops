@@ -1,0 +1,1245 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": "-- Grafana --",
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "gnetId": null,
+  "graphTooltip": 0,
+  "id": 26,
+  "iteration": 1603317480054,
+  "links": [],
+  "panels": [
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {}
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 7,
+        "x": 0,
+        "y": 0
+      },
+      "id": 8,
+      "options": {
+        "content": "# Experiment: $kfp_experiment_name\n\n## Back to [experiment list](/d/vCuZ7UKGz/kubeflow-experiment-list)\n",
+        "mode": "markdown"
+      },
+      "pluginVersion": "7.1.0",
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {},
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 5,
+        "x": 7,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "last"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "expr": "count(count_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[30d]))",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Run Count",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null
+          },
+          "mappings": [],
+          "noValue": "0%",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 0.5
+              },
+              {
+                "color": "green",
+                "value": 0.8
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "first"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "expr": "sum(kfp_run_status{kfp_run_id=~\"$kfp_run_ids\",kfp_run_status=\"Succeeded\"} > 0) / sum(kfp_run_status{kfp_run_id=~\"$kfp_run_ids\",kfp_run_status!=\"Running\"} > 0)",
+          "format": "table",
+          "instant": true,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Current Success Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 6,
+        "x": 18,
+        "y": 0
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "/^Value$/",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "expr": "avg(\n  kfp_run_finished{kfp_run_id=~\"$kfp_run_ids\"} - kfp_run_created{kfp_run_id=~\"$kfp_run_ids\"} > 0\n)",
+          "format": "time_series",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Average Run Duration",
+      "type": "stat"
+    },
+    {
+      "datasource": null,
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": null,
+            "filterable": false
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              }
+            ]
+          },
+          "unit": "dateTimeFromNow"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Duration"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.width",
+                "value": 77
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Run ID"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Drill down to run",
+                    "url": "./d/wv5-BAFMz/kubeflow-run-detail?var-kfp_run_id=${__data.fields[kfp_run_id]}&from=${__data.fields[Created].numeric}&to=${__data.fields[Finished].numeric}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 285
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Run Name"
+            },
+            "properties": [
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Drill down to run",
+                    "url": "./d/wv5-BAFMz/kubeflow-run-detail?var-kfp_run_id=${__data.fields[kfp_run_id]}&from=${__data.fields[Created].numeric}&to=${__data.fields[Finished].numeric}"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": null
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Run Status"
+            },
+            "properties": [
+              {
+                "id": "custom.displayMode",
+                "value": "auto"
+              },
+              {
+                "id": "custom.width",
+                "value": 96
+              },
+              {
+                "id": "noValue",
+                "value": "Running"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Created"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Finished"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 111
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Cumulative CPU Usage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "s"
+              },
+              {
+                "id": "custom.width",
+                "value": 165
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Peak Memory Usage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "decbytes"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 6
+      },
+      "id": 2,
+      "options": {
+        "frameIndex": 0,
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Created"
+          }
+        ]
+      },
+      "pluginVersion": "7.2.0",
+      "targets": [
+        {
+          "expr": "sum(\n  count_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[30d])\n) by (kfp_run_id, kfp_run_name)",
+          "format": "table",
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(\n  max_over_time(kfp_run_finished{kfp_run_id=~\"$kfp_run_ids\"}[30d])\n  -\n  max_over_time(kfp_run_created{kfp_run_id=~\"$kfp_run_ids\"}[30d])\n) by (kfp_run_id) > 0",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "B"
+        },
+        {
+          "expr": "max(\n  # Convert to nanoseconds\n  (max_over_time(kfp_run_finished{kfp_run_id=~\"$kfp_run_ids\"}[30d]) * 1000)\n    # Offset by 10min\n    + (10 * 60 * 1000)\n# Hide anything less than 10min offset\n) by (kfp_run_id) > (10 * 60 * 1000)",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "C"
+        },
+        {
+          "expr": "max(\n  # Convert to nanoseconds\n  (max_over_time(kfp_run_created{kfp_run_id=~\"$kfp_run_ids\"}[30d]) * 1000)\n    # Offset by 10min\n    - (10 * 60 * 1000)\n# Hide anything less than 10min offset\n) by (kfp_run_id) > 0",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "D"
+        },
+        {
+          "expr": "max(\n  max_over_time(kfp_run_status{kfp_run_id=~\"$kfp_run_ids\",kfp_run_status!=\"Running\"}[30d])\n) by (kfp_run_id, kfp_run_status) > 0",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "E"
+        },
+        {
+          "expr": "sum(\n  max(\n    label_replace(max_over_time(container_cpu_usage_seconds_total{namespace=\"kubeflow\", image!=\"\", container=\"main\"}[30d]), \"kfp_pod_name\", \"$1\", \"pod\", \"(.+)\")\n  ) by (kfp_pod_name)\n    * on (kfp_pod_name) group_right sum(kfp_pod_info) by (kfp_workload_name, kfp_pod_name)\n    * on (kfp_workload_name) group_left(kfp_run_id) sum(\n      kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}\n    ) by (kfp_run_id, kfp_workload_name)\n) by (kfp_run_id)",
+          "format": "table",
+          "interval": "",
+          "legendFormat": "",
+          "refId": "G"
+        },
+        {
+          "expr": "max(\n  max(\n    max(label_replace(max_over_time(container_memory_usage_bytes{namespace=\"kubeflow\",image!=\"\", container=\"main\",pod=~\"$kfp_pod_names\"}[30d]), \"kfp_pod_name\", \"$1\", \"pod\", \"(.+)\")\n    ) by (kfp_pod_name)\n      * on (kfp_pod_name) group_right sum(kfp_pod_info) by (kfp_workload_name, kfp_pod_name)\n  ) by (kfp_workload_name)\n    * on (kfp_workload_name) group_right sum(kfp_run_info) by (kfp_workload_name, kfp_run_id)\n) by (kfp_run_id)",
+          "format": "table",
+          "hide": false,
+          "instant": false,
+          "interval": "",
+          "legendFormat": "",
+          "refId": "H"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "KubeFlow Pipeline Runs for Experiment",
+      "transformations": [
+        {
+          "id": "seriesToColumns",
+          "options": {
+            "byField": "kfp_run_id"
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "Time": true,
+              "Value #A": true,
+              "Value #C": false,
+              "Value #D": false,
+              "Value #E": true
+            },
+            "indexByName": {
+              "Time": 1,
+              "Value #A": 6,
+              "Value #B": 3,
+              "Value #C": 5,
+              "Value #D": 4,
+              "Value #E": 8,
+              "kfp_run_id": 0,
+              "kfp_run_name": 2,
+              "kfp_run_status": 7
+            },
+            "renameByName": {
+              "Time": "",
+              "Value #B": "Duration",
+              "Value #C": "Finished",
+              "Value #D": "Created",
+              "Value #E": "",
+              "Value #G": "Cumulative CPU Usage",
+              "Value #H": "Peak Memory Usage",
+              "kfp_run_id": "Run ID",
+              "kfp_run_name": "Run Name",
+              "kfp_run_status": "Run Status"
+            }
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 14
+      },
+      "id": 16,
+      "panels": [
+        {
+          "datasource": null,
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "noValue": "No data (too short)",
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Peak Memory Usage"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "decbytes"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 150
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Cumulative CPU Usage"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 163
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Run ID"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "title": "Drill down to run",
+                        "url": "./d/wv5-BAFMz/kubeflow-run-detail?var-kfp_run_id=${__data.fields[kfp_run_id]}"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 280
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Pod Name"
+                },
+                "properties": [
+                  {
+                    "id": "links",
+                    "value": [
+                      {
+                        "title": "Drill down to pod",
+                        "url": "./d/6581e46e4e5c7ba40a07646395ef7b23/kubernetes-compute-resources-pod?&var-namespace=kubeflow&var-pod=${__data.fields[pod]}"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 498
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Memory Requested"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "decbytes"
+                  },
+                  {
+                    "id": "noValue"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 136
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Duration"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "s"
+                  },
+                  {
+                    "id": "custom.width",
+                    "value": 82
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 24,
+            "x": 0,
+            "y": 15
+          },
+          "id": 10,
+          "options": {
+            "frameIndex": 1,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Cumulative CPU Usage"
+              }
+            ]
+          },
+          "pluginVersion": "7.2.0",
+          "targets": [
+            {
+              "expr": "max(\n  max_over_time(container_cpu_usage_seconds_total{container=\"main\",image!=\"\",pod=~\"$kfp_pod_names\"}[7d])\n) by (pod)",
+              "format": "table",
+              "interval": "",
+              "intervalFactor": 1,
+              "legendFormat": "",
+              "refId": "A"
+            },
+            {
+              "expr": "sum(\n  kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}\n) by (kfp_workload_name, kfp_run_id, kfp_run_name)\n  * on (kfp_workload_name) group_right(kfp_run_id, kfp_run_name) label_replace(kfp_pod_info, \"pod\", \"$1\", \"kfp_pod_name\", \"(.+)\")",
+              "format": "table",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "B"
+            },
+            {
+              "expr": "max(\n  max_over_time(container_memory_usage_bytes{container=\"main\",image!=\"\",pod=~\"$kfp_pod_names\"}[7d])\n) by (pod)",
+              "format": "table",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "C"
+            },
+            {
+              "expr": "max(\n  kube_pod_container_resource_requests_memory_bytes{namespace=\"kubeflow\",container=\"main\",pod=~\"$kfp_pod_names\"}\n) by (pod)",
+              "format": "table",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "D"
+            },
+            {
+              "expr": "max(\n  kube_pod_container_resource_limits_cpu_cores{namespace=\"kubeflow\",container=\"main\",pod=~\"$kfp_pod_names\"}\n) by (pod)",
+              "format": "table",
+              "hide": false,
+              "instant": false,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "E"
+            },
+            {
+              "expr": "# Use creation and completion time of pods and map to steps to get step duration.\nlabel_replace(\n  sum(\n    sum(\n      kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}\n    ) by (kfp_workload_name)\n      * on (kfp_workload_name) group_right(kfp_run_id, kfp_run_name) kfp_pod_info\n      * on (kfp_pod_name) group_left label_replace(kube_pod_completion_time{namespace=\"kubeflow\"}, \"kfp_pod_name\", \"$1\", \"pod\", \"(.+)\")\n    -\n    sum(\n      kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}\n    ) by (kfp_workload_name)\n      * on (kfp_workload_name) group_right(kfp_run_id, kfp_run_name) kfp_pod_info\n      * on (kfp_pod_name) group_left label_replace(kube_pod_created{namespace=\"kubeflow\"}, \"kfp_pod_name\", \"$1\", \"pod\", \"(.+)\")\n  ) by (kfp_pod_name),\n\"pod\", \"$1\", \"kfp_pod_name\", \"(.+)\")",
+              "format": "table",
+              "hide": false,
+              "instant": false,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "F"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Top Step Resource Usage",
+          "transformations": [
+            {
+              "id": "seriesToColumns",
+              "options": {
+                "byField": "pod"
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true,
+                  "Value #B": true,
+                  "database": true,
+                  "endpoint": true,
+                  "instance": true,
+                  "job": true,
+                  "kfp_pod_name": true,
+                  "kfp_workload_name": true,
+                  "namespace": true,
+                  "service": true
+                },
+                "indexByName": {
+                  "Time": 4,
+                  "Value #A": 6,
+                  "Value #B": 7,
+                  "Value #C": 8,
+                  "Value #D": 17,
+                  "Value #F": 5,
+                  "database": 9,
+                  "endpoint": 10,
+                  "instance": 11,
+                  "job": 12,
+                  "kfp_pod_desc": 2,
+                  "kfp_pod_name": 13,
+                  "kfp_run_id": 0,
+                  "kfp_run_name": 1,
+                  "kfp_workload_name": 14,
+                  "namespace": 15,
+                  "pod": 3,
+                  "service": 16
+                },
+                "renameByName": {
+                  "Value #A": "Cumulative CPU Usage",
+                  "Value #C": "Peak Memory Usage",
+                  "Value #D": "Memory Requested",
+                  "Value #F": "Duration",
+                  "kfp_pod_desc": "Step Name",
+                  "kfp_run_id": "Run ID",
+                  "kfp_run_name": "Run Name",
+                  "pod": "Pod Name",
+                  "service": ""
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": null,
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "percentage",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "s"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Cumulative CPU Usage"
+                },
+                "properties": [
+                  {
+                    "id": "custom.displayMode",
+                    "value": "gradient-gauge"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 0,
+            "y": 24
+          },
+          "id": 20,
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Cumulative CPU Usage"
+              }
+            ]
+          },
+          "pluginVersion": "7.2.0",
+          "targets": [
+            {
+              "expr": "sum(\n  sum(\n    label_replace(kfp_pod_info, \"pod\", \"$1\", \"kfp_pod_name\", \"(.+)\")\n  ) by (pod, kfp_pod_desc)\n    * on (pod) group_right(kfp_pod_desc) max(\n      max_over_time(container_cpu_usage_seconds_total{namespace=\"kubeflow\"}[30d])\n    ) by (pod)\n) by (kfp_pod_desc)",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "legendFormat": "{{kfp_pod_desc}}",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Cumulative Step CPU Usage",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Cumulative CPU Usage",
+                  "kfp_pod_desc": "Step Name"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": null,
+          "description": "",
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "percentage",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unit": "bytes"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Average Memory Usage"
+                },
+                "properties": [
+                  {
+                    "id": "custom.displayMode",
+                    "value": "gradient-gauge"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 9,
+            "w": 12,
+            "x": 12,
+            "y": 24
+          },
+          "id": 21,
+          "options": {
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Average Memory Usage"
+              }
+            ]
+          },
+          "pluginVersion": "7.2.0",
+          "targets": [
+            {
+              "expr": "sum(\n  sum(\n    label_replace(kfp_pod_info, \"pod\", \"$1\", \"kfp_pod_name\", \"(.+)\")\n  ) by (pod, kfp_pod_desc)\n    * on (pod) group_right(kfp_pod_desc) avg(\n      avg_over_time(container_memory_max_usage_bytes{namespace=\"kubeflow\"}[30d])\n    ) by (pod)\n) by (kfp_pod_desc)",
+              "format": "table",
+              "instant": true,
+              "interval": "",
+              "legendFormat": "{{kfp_pod_desc}}",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Average Step Memory Usage",
+          "transformations": [
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {
+                  "Time": true
+                },
+                "indexByName": {},
+                "renameByName": {
+                  "Value": "Average Memory Usage",
+                  "kfp_pod_desc": "Step Name"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Step info",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "datasource": null,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 15
+      },
+      "id": 18,
+      "panels": [
+        {
+          "datasource": null,
+          "fieldConfig": {
+            "defaults": {
+              "custom": {
+                "align": null,
+                "filterable": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "red",
+                    "value": null
+                  },
+                  {
+                    "color": "yellow",
+                    "value": 0.6
+                  },
+                  {
+                    "color": "green",
+                    "value": 0.8
+                  }
+                ]
+              },
+              "unit": "dateTimeFromNow"
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Value"
+                },
+                "properties": [
+                  {
+                    "id": "unit",
+                    "value": "percentunit"
+                  },
+                  {
+                    "id": "custom.displayMode",
+                    "value": "gradient-gauge"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 11,
+            "w": 24,
+            "x": 0,
+            "y": 16
+          },
+          "id": 14,
+          "options": {
+            "frameIndex": 0,
+            "showHeader": true,
+            "sortBy": [
+              {
+                "desc": true,
+                "displayName": "Finished"
+              }
+            ]
+          },
+          "pluginVersion": "7.2.0",
+          "targets": [
+            {
+              "expr": "sum(\n  kfp_metric{kfp_experiment_id=\"$kfp_experiment_id\"}\n) by (kfp_metric_name, kfp_run_id, kfp_pod_name)",
+              "format": "table",
+              "instant": false,
+              "interval": "",
+              "legendFormat": "",
+              "refId": "A"
+            },
+            {
+              "expr": "# # Join on metrics so we only show runs that reported metrics.\n# Multiply by 0 so we only get the created value.\n(kfp_metric{kfp_experiment_id=\"$kfp_experiment_id\"} * 0)\n# Using created allows us to show unfinished runs at the top.\n# Convert to nanoseconds\n+ on (kfp_run_id) kfp_run_created * 1000",
+              "format": "table",
+              "interval": "",
+              "legendFormat": "",
+              "refId": "B"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Model Accuracy for KubeFlow Pipeline Runs",
+          "transformations": [
+            {
+              "id": "seriesToColumns",
+              "options": {
+                "byField": "kfp_run_id"
+              }
+            },
+            {
+              "id": "filterFieldsByName",
+              "options": {
+                "include": {
+                  "names": [
+                    "kfp_metric_name",
+                    "kfp_pod_name",
+                    "kfp_run_id",
+                    "Value #A",
+                    "Value #B"
+                  ]
+                }
+              }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": {},
+                "indexByName": {
+                  "Value #A": 4,
+                  "Value #B": 2,
+                  "kfp_metric_name": 3,
+                  "kfp_pod_name": 1,
+                  "kfp_run_id": 0
+                },
+                "renameByName": {
+                  "Value #A": "Value",
+                  "Value #B": "Created",
+                  "kfp_experiment_id": "Kubeflow Experiment ID",
+                  "kfp_metric_name": "Metric Name",
+                  "kfp_pod_name": "Pod Name",
+                  "kfp_run_id": "Run ID",
+                  "{kfp_metric_name=\"accuracy-score\"}": "Accuracy"
+                }
+              }
+            }
+          ],
+          "type": "table"
+        }
+      ],
+      "title": "Model metric info",
+      "type": "row"
+    }
+  ],
+  "refresh": false,
+  "schemaVersion": 26,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "86237152-a6a9-4b6a-8276-d54bfecb0f13",
+          "value": "86237152-a6a9-4b6a-8276-d54bfecb0f13"
+        },
+        "datasource": "Prometheus",
+        "definition": "label_values(kfp_run_info, kfp_experiment_id)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "KubeFlow Experiment ID",
+        "multi": false,
+        "name": "kfp_experiment_id",
+        "options": [],
+        "query": "label_values(kfp_run_info, kfp_experiment_id)",
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "azdoruns",
+          "value": "azdoruns"
+        },
+        "datasource": "Prometheus",
+        "definition": "query_result(sum(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}) by (kfp_experiment_name))",
+        "hide": 2,
+        "includeAll": false,
+        "label": null,
+        "multi": false,
+        "name": "kfp_experiment_name",
+        "options": [],
+        "query": "query_result(sum(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}) by (kfp_experiment_name))",
+        "refresh": 2,
+        "regex": ".*\"(.*)\".*",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "query_result(sum(sum(sum_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[7d])) by (kfp_workload_name) * on (kfp_workload_name) group_right sum_over_time(kfp_pod_info[30d])) by (kfp_pod_name))",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "kfp_pod_names",
+        "options": [],
+        "query": "query_result(sum(sum(sum_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[7d])) by (kfp_workload_name) * on (kfp_workload_name) group_right sum_over_time(kfp_pod_info[30d])) by (kfp_pod_name))",
+        "refresh": 2,
+        "regex": ".*?\"(.*?)\".*",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      },
+      {
+        "allValue": null,
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
+        },
+        "datasource": "Prometheus",
+        "definition": "query_result(sum(sum_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[30d])) by (kfp_run_id))",
+        "hide": 2,
+        "includeAll": true,
+        "label": null,
+        "multi": false,
+        "name": "kfp_run_ids",
+        "options": [],
+        "query": "query_result(sum(sum_over_time(kfp_run_info{kfp_experiment_id=\"$kfp_experiment_id\"}[30d])) by (kfp_run_id))",
+        "refresh": 2,
+        "regex": ".*\"(.*)\".*",
+        "skipUrlSync": false,
+        "sort": 0,
+        "tagValuesQuery": "",
+        "tags": [],
+        "tagsQuery": "",
+        "type": "query",
+        "useTags": false
+      }
+    ]
+  },
+  "time": {
+    "from": "now-7d",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ]
+  },
+  "timezone": "",
+  "title": "KubeFlow Experiment Detail",
+  "uid": "7tHMLeFGk",
+  "version": 25
+}
