@@ -13,25 +13,39 @@ jobs:
     steps:    
     - name: Copy Repository Contents
       uses: actions/checkout@master
+    
+    - name: Set up Python 3.7
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
 
     - name: Install Python dependencies
       run: |
-        pip3 install requests --upgrade
+        pip3 install requests adal --upgrade
 
 
     - name: Handle Deploy Event
       id: deh
       run: |
-        python3 event_dispatcher.py --event_type "deploy"
+        python3 event_dispatcher.py --event_type "deploy"        
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       working-directory: .github/events
 
+    - name: Get Access Token
+      run: |
+        export MLFLOW_TOKEN=$(python code/utils/azure_auth.py \
+                              --tenant ${{ secrets.tenant }} \
+                              --service_principal ${{ secrets.SERVICE_PRINCIPAL }} \
+                              --sp_secret ${{ secrets.SERVICE_PRINCIPAL_PWD }} 2>&1 >/dev/null)                            
+        echo "::set-env name=MLFLOW_TOKEN::$MLFLOW_TOKEN"
+
     - name: Download model
       run: |
         cd $GITHUB_WORKSPACE/code/seldon        
-        mlflow_run_id=$(curl -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
-        curl -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
+        mlflow_run_id=$(curl -H "Authorization: Bearer $MLFLOW_TOKEN " -d '{"experiment_ids":['$MLFLOW_EXPERIMENT'],"filter":"tags.external_run_id='\'''$RUN_ID''\''"}' ${{ secrets.KFP_DSHB }}/mlflow/api/2.0/preview/mlflow/runs/search | jq -r '.runs[0].info.run_id')     
+        echo $mlflow_run_id
+        curl -H "Authorization: Bearer $MLFLOW_TOKEN " -L '${{ secrets.KFP_DSHB }}/mlflow/get-artifact?path=model/data/model.h5&run_uuid='$mlflow_run_id > model.h5
         echo "::set-env name=mlflow_run_id::$mlflow_run_id"
       env:
         RUN_ID: ${{ steps.deh.outputs.RUN_ID }}   
@@ -44,13 +58,14 @@ jobs:
         echo ${{ secrets.DOCKER_PWD}} | docker login --username ${{ secrets.DOCKER_USER }} --password-stdin
         docker build $GITHUB_WORKSPACE/code/seldon -t ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
         docker push ${{ secrets.MODEL_IMAGE_NAME }}:$RUN_ID
+        echo $RUN_ID
       env:
         RUN_ID: ${{ steps.deh.outputs.RUN_ID }}  
-
+        
     - name: Promote model to Staging
       run: |
-        body=$(curl ${{ secrets.KFP_DSHB }}/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27${mlflow_run_id}%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output)
-        curl -d $body ${{ secrets.KFP_DSHB }}/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
+        body=$(curl -H "Authorization: Bearer $MLFLOW_TOKEN " ${{ secrets.KFP_DSHB }}/mlflow/ajax-api/2.0/preview/mlflow/model-versions/search?filter=run_id%3D%27${mlflow_run_id}%27 | jq '.model_versions[0] | {name: .name, version: .version, stage: $stage}' --arg stage Staging --compact-output)
+        curl -H "Authorization: Bearer $MLFLOW_TOKEN " -d $body ${{ secrets.KFP_DSHB }}/mlflow/ajax-api/2.0/preview/mlflow/model-versions/transition-stage
 
     - name: Deploy Model to SeldonCore
       uses: WyriHaximus/github-action-helm3@master
