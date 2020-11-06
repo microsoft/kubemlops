@@ -24,6 +24,8 @@ def send_complete_event(callbackinfo, pat, status):  # noqa: E501
     header = {'Authorization': 'Basic ' + pat}
     response = requests.post(url, json=data, headers=header)
     print(response)
+    # Raise an exception on failure code, otherwise no-op
+    response.raise_for_status()
 
 
 def get_component_status(kfp_host_url, kfp_run_id, token=None):
