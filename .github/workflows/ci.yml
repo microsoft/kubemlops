@@ -66,7 +66,7 @@ jobs:
           # Docker image name
           image: databricks-notebook
           # The folder in the Github repo that holds the source
-          folder: code/databricks
+          folder: code/components/databricks
       - name: Build Preprocess Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
         uses: ams0/acr-task-github-action@v1
@@ -86,7 +86,7 @@ jobs:
           # Docker image name
           image: preprocess
           # The folder in the Github repo that holds the source
-          folder: code/preprocess
+          folder: code/components/preprocess
 
       - name: Build Register KF Artifacts Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
@@ -107,7 +107,7 @@ jobs:
           # Docker image name
           image: registerartifacts
           # The folder in the Github repo that holds the source
-          folder: code/register-artifacts
+          folder: code/components/register-artifacts
 
       - name: Build AML Register Model Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
@@ -128,7 +128,7 @@ jobs:
           # Docker image name
           image: aml-register-model
           # The folder in the Github repo that holds the source
-          folder: code/aml-register-model
+          folder: code/components/aml-register-model
 
       - name: Build MLFlow Register Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
@@ -149,7 +149,7 @@ jobs:
           # Docker image name
           image: register-mlflow
           # The folder in the Github repo that holds the source
-          folder: code/register-mlflow
+          folder: code/components/register-mlflow
 
       - name: Build Training Image
         if: github.event_name == 'push' || contains(github.event.comment.body, '/build-images')
@@ -170,7 +170,7 @@ jobs:
           # Docker image name
           image: training
           # The folder in the Github repo that holds the source
-          folder: code/training
+          folder: code/components/training
 
   build_kfp_pipeline:
     env:
