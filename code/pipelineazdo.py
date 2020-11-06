@@ -25,24 +25,24 @@ component_root = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), ".")
 image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
 
-mlflow_project_op = components.load_component_from_file(os.path.join(component_root, 'mlflow-project/component.yaml'))  # noqa: E501
+mlflow_project_op = components.load_component_from_file(os.path.join(component_root, 'components/mlflow-project/component.yaml'))  # noqa: E501
 mlflow_project_image_name = image_repo_name + '/mlflowproject:%s' % (os.getenv('MLFLOWPROJECT_TAG') or 'latest')  # noqa: E501
 
-train_op = components.load_component_from_file(os.path.join(component_root, 'training/component.yaml'))  # noqa: E501
+train_op = components.load_component_from_file(os.path.join(component_root, 'components/training/component.yaml'))  # noqa: E501
 train_image_name = image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest')  # noqa: E501
 
-evaluate_op = components.load_component_from_file(os.path.join(component_root, 'evaluate/component.yaml'))  # noqa: E501
+evaluate_op = components.load_component_from_file(os.path.join(component_root, 'components/evaluate/component.yaml'))  # noqa: E501
 
-register_op = components.load_component_from_file(os.path.join(component_root, 'aml-register-model/component.yaml'))  # noqa: E501
+register_op = components.load_component_from_file(os.path.join(component_root, 'components/aml-register-model/component.yaml'))  # noqa: E501
 register_images_name = image_repo_name + '/aml-register-model:%s' % (os.getenv('AML_REGISTER_MODEL_TAG') or 'latest')  # noqa: E501
 
-register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'register-mlflow/component.yaml'))  # noqa: E501
+register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'components/register-mlflow/component.yaml'))  # noqa: E501
 register_mlflow_image_name = image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest')  # noqa: E501
 
-exit_op = components.load_component_from_file(os.path.join(component_root, 'azdocallback/component.yaml'))  # noqa: E501
+exit_op = components.load_component_from_file(os.path.join(component_root, 'components/azdocallback/component.yaml'))  # noqa: E501
 exit_image_name = image_repo_name + '/azdocallback:%s' % (os.getenv('AZDOCALLBACK_TAG') or 'latest')  # noqa: E501
 
-preprocess_op = components.load_component_from_file(os.path.join(component_root, 'preprocess/component.yaml'))  # noqa: E501
+preprocess_op = components.load_component_from_file(os.path.join(component_root, 'components/preprocess/component.yaml'))  # noqa: E501
 preprocess_image_name = image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest')  # noqa: E501
 
 

@@ -48,24 +48,24 @@ component_root = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), ".")
 image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
 
-databricks_op = components.load_component_from_file(os.path.join(component_root, 'databricks/component.yaml'))  # noqa: E501
+databricks_op = components.load_component_from_file(os.path.join(component_root, 'components/databricks/component.yaml'))  # noqa: E501
 databricks_image_name = image_repo_name + '/databricks-notebook:%s' % (os.getenv('DATABRICKS_TAG') or 'latest')  # noqa: E501
 
-preprocess_op = components.load_component_from_file(os.path.join(component_root, 'preprocess/component.yaml'))  # noqa: E501
+preprocess_op = components.load_component_from_file(os.path.join(component_root, 'components/preprocess/component.yaml'))  # noqa: E501
 preprocess_image_name = image_repo_name + '/preprocess:%s' % (os.getenv('PREPROCESS_TAG') or 'latest')  # noqa: E501
 
-train_op = components.load_component_from_file(os.path.join(component_root, 'training/component.yaml'))  # noqa: E501
+train_op = components.load_component_from_file(os.path.join(component_root, 'components/training/component.yaml'))  # noqa: E501
 train_image_name = image_repo_name + '/training:%s' % (os.getenv('TRAINING_TAG') or 'latest')  # noqa: E501
 
-evaluate_op = components.load_component_from_file(os.path.join(component_root, 'evaluate/component.yaml'))  # noqa: E501
-register_op = components.load_component_from_file(os.path.join(component_root, 'aml-register-model/component.yaml'))  # noqa: E501
+evaluate_op = components.load_component_from_file(os.path.join(component_root, 'components/evaluate/component.yaml'))  # noqa: E501
+register_op = components.load_component_from_file(os.path.join(component_root, 'components/aml-register-model/component.yaml'))  # noqa: E501
 register_images_name = image_repo_name + '/aml-register-model:%s' % (os.getenv('AML_REGISTER_MODEL_TAG') or 'latest')  # noqa: E501
 
-register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'register-mlflow/component.yaml'))  # noqa: E501
+register_mlflow_op = components.load_component_from_file(os.path.join(component_root, 'components/register-mlflow/component.yaml'))  # noqa: E501
 register_mlflow_image_name = image_repo_name + '/register-mlflow:%s' % (os.getenv('REGISTERMLFLOW_TAG') or 'latest')  # noqa: E501
 
-finalize_op = components.load_component_from_file(os.path.join(component_root, 'finalize/component.yaml'))  # noqa: E501
-exit_op = components.load_component_from_file(os.path.join(component_root, 'exit-handler/component.yaml'))  # noqa: E501
+finalize_op = components.load_component_from_file(os.path.join(component_root, 'components/finalize/component.yaml'))  # noqa: E501
+exit_op = components.load_component_from_file(os.path.join(component_root, 'components/exit-handler/component.yaml'))  # noqa: E501
 
 
 @dsl.pipeline(

@@ -47,5 +47,5 @@ Code for the following can be found in the code directory, but currently there i
 
 - Running Kubeflow component in parallel
 - Running Jupyter Server within Kubeflow
-- Running MLFlow Project from Kubeflow
-- Model deployment with KF Serving
+- [Running MLFlow Project from Kubeflow](./code/components/mlflow-project/component.yaml)
+- [Model deployment with KF Serving](./code/kfserving)

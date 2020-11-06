@@ -21,7 +21,7 @@ component_root = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), ".")
 image_repo_name = "kubeflowyoacr.azurecr.io/mexicanfood"
 
-notebook_op = components.load_component_from_file(os.path.join(component_root, 'notebook-comp/component.yaml'))  # noqa: E501
+notebook_op = components.load_component_from_file(os.path.join(component_root, 'components/notebook-comp/component.yaml'))  # noqa: E501
 notebook_images_name = image_repo_name + '/notebook-comp:latest'  # noqa: E501
 
 

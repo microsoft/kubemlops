@@ -50,7 +50,7 @@ Steps to follow
 1. Parameterize your notebook by designating a cell with the tag "parameters".<br>
    ![light-weight](./diagrams/parameters.gif)
 2. Copy your Notebook at [/notebook-comp/notebook/experiment.ipynb](../code/notebook-comp/notebook/experiment.ipynb)
-3. Update inputs at [/notebook-comp/component.yaml](../code/notebook-comp/component.yaml) and [/notebook-comp/src/program.cs](../code/notebook-comp/src/program.py) in execute_notebook method
+3. Update inputs at [components/notebook-comp/component.yaml](../code/notebook-comp/component.yaml) and [components/notebook-comp/src/program.cs](../code/notebook-comp/src/program.py) in execute_notebook method
 4. Build and push container image with [/notebook-comp/build.sh](../code/notebook-comp/build.sh)
 5. Run [pipeline-local.py](../code/pipeline-local.py) to build, upload and run Kubeflow pipeline
 
