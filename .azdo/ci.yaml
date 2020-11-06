@@ -38,57 +38,57 @@ stages:
         steps:
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/mlflow-project/'
-            dockerFile: 'code/mlflow-project/Dockerfile'
+            sourceLocation: 'code/components/mlflow-project/'
+            dockerFile: 'code/components/mlflow-project/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/mlflowproject'
             taskname: 'mlflowproject_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/azdocallback/'
-            dockerFile: 'code/azdocallback/Dockerfile'
+            sourceLocation: 'code/components/azdocallback/'
+            dockerFile: 'code/components/azdocallback/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/azdocallback'
             taskname: 'azdocallback_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/preprocess/'
-            dockerFile: 'code/preprocess/Dockerfile'
+            sourceLocation: 'code/components/preprocess/'
+            dockerFile: 'code/components/preprocess/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/preprocess'
             taskname: 'preprocess_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/register-artifacts/'
-            dockerFile: 'code/register-artifacts/Dockerfile'
+            sourceLocation: 'code/components/register-artifacts/'
+            dockerFile: 'code/components/register-artifacts/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/registerartifacts'
             taskname: 'registerartifacts_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/register-mlflow/'
-            dockerFile: 'code/register-mlflow/Dockerfile'
+            sourceLocation: 'code/components/register-mlflow/'
+            dockerFile: 'code/components/register-mlflow/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/register-mlflow'
             taskname: 'registermlflow_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/aml-register-model/'
-            dockerFile: 'code/aml-register-model/Dockerfile'
+            sourceLocation: 'code/components/aml-register-model/'
+            dockerFile: 'code/components/aml-register-model/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/aml-register-model'
             taskname: 'aml_register_model_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/training/'
-            dockerFile: 'code/training/Dockerfile'
+            sourceLocation: 'code/components/training/'
+            dockerFile: 'code/components/training/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/training'
             taskname: 'training_container'
         - template: build-container-template.yml
           parameters:
-            sourceLocation: 'code/databricks/'
-            dockerFile: 'code/databricks/Dockerfile'
+            sourceLocation: 'code/components/databricks/'
+            dockerFile: 'code/components/databricks/Dockerfile'
             acr: 'kubeflowyoacr'
             repository: 'mexicanfood/databricks-notebook'
             taskname: 'databricks_container'
